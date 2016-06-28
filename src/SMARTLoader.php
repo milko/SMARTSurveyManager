@@ -319,34 +319,22 @@ class SMARTLoader
 	const kCOLLECTION_OFFSET_MOTHER_ID = '@SURVEY_MOTHER_ID';
 
 	/**
-	 * <h4>Duplicates column name.</h4>
+	 * <h4>Children count.</h4>
 	 *
-	 * This constant holds the <em>column offset</em> in the dataset file that contains the
-	 * <em>duplicate entry flag</em>.
+	 * This constant holds the <em>variable name</em> for the <em>children count</em>.
 	 *
 	 * @var string
 	 */
-	const kFILE_OFFSET_DUPLICATES = '@DUPLICATE@';
+	const kCOLLECTION_OFFSET_CHILD_COUNT = '@CHILD_COUNT';
 
 	/**
-	 * <h4>Invalid household reference column name.</h4>
+	 * <h4>Mothers count.</h4>
 	 *
-	 * This constant holds the <em>column offset</em> in the dataset file that contains the
-	 * <em>invalid household reference flag</em>.
-	 *
-	 * @var string
-	 */
-	const kFILE_OFFSET_HOUSEHOLD_REF = '@INVALID_HOUSEHOLD@';
-
-	/**
-	 * <h4>Invalid mother reference column name.</h4>
-	 *
-	 * This constant holds the <em>column offset</em> in the dataset file that contains the
-	 * <em>invalid mother reference flag</em>.
+	 * This constant holds the <em>variable name</em> for the <em>mothers count</em>.
 	 *
 	 * @var string
 	 */
-	const kFILE_OFFSET_MOTHER_REF = '@INVALID_MOTHER@';
+	const kCOLLECTION_OFFSET_MOTHER_COUNT = '@MOTHER_COUNT';
 
 	/**
 	 * <h4>Data dictionary child identifier.</h4>
@@ -3095,6 +3083,361 @@ class SMARTLoader
 	} // CheckMotherDatasetRelatedHouseholds.
 
 
+	/*===================================================================================
+	 *	SetChildCount																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set children count.</h4>
+	 *
+	 * This method is used by the public interface to load the children count in the mother
+	 * dataset, the method will count how many children each mother has and write the
+	 * result into the mother dataset under the {@link kCOLLECTION_OFFSET_CHILD_COUNT}
+	 * field; the method relies on the {@link kCOLLECTION_OFFSET_MOTHER_ID} field in the
+	 * child collection.
+	 *
+	 * The method will raise an exception if the child or mother datasets are missing.
+	 *
+	 * @throws RuntimeException
+	 */
+	public function SetChildCount()
+	{
+		//
+		// Check mother collection.
+		//
+		if( $this->datasetCollection( self::kDDICT_MOTHER_ID )->count() )
+		{
+			//
+			// Check child collection.
+			//
+			if( $this->datasetCollection( self::kDDICT_CHILD_ID )->count() )
+			{
+				//
+				// Iterate mothers.
+				//
+				$cursor = $this->datasetCollection( self::kDDICT_MOTHER_ID )->find();
+				foreach( $cursor as $document )
+					$this->datasetCollection( self::kDDICT_MOTHER_ID )
+						->updateOne(
+							[ '_id' => $document[ '_id' ] ],
+							[ '$set' => [ self::kCOLLECTION_OFFSET_CHILD_COUNT
+							=> $this->datasetCollection( self::kDDICT_CHILD_ID )
+									->count( [
+										self::kCOLLECTION_OFFSET_MOTHER_ID
+										=> $document[ '_id' ]
+									] ) ] ]
+						);
+
+			} // Has child collection.
+
+			//
+			// Missing child collection.
+			//
+			else
+				throw new RuntimeException(
+					"Child collection not yet loaded." );						// !@! ==>
+
+		} // Has mother collection.
+
+		//
+		// Missing mother collection.
+		//
+		else
+			throw new RuntimeException(
+				"Mother collection not yet loaded." );							// !@! ==>
+
+	} // SetChildCount.
+
+
+	/*===================================================================================
+	 *	SetMotherCount																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set mothers count.</h4>
+	 *
+	 * This method is used by the public interface to load the children count in the mother
+	 * dataset, the method will count how many children each mother has and write the
+	 * result into the mother dataset under the {@link kCOLLECTION_OFFSET_CHILD_COUNT}
+	 * field; the method relies on the {@link kCOLLECTION_OFFSET_MOTHER_ID} field in the
+	 * child collection.
+	 *
+	 * The method will raise an exception if the child or mother datasets are missing.
+	 *
+	 * @throws RuntimeException
+	 */
+	public function SetMotherCount()
+	{
+		//
+		// Check household collection.
+		//
+		if( $this->datasetCollection( self::kDDICT_HOUSEHOLD_ID )->count() )
+		{
+			//
+			// Check mother collection.
+			//
+			if( $this->datasetCollection( self::kDDICT_MOTHER_ID )->count() )
+			{
+				//
+				// Iterate households.
+				//
+				$cursor = $this->datasetCollection( self::kDDICT_HOUSEHOLD_ID )->find();
+				foreach( $cursor as $document )
+					$this->datasetCollection( self::kDDICT_HOUSEHOLD_ID )
+						->updateOne(
+							[ '_id' => $document[ '_id' ] ],
+							[ '$set' => [ self::kCOLLECTION_OFFSET_MOTHER_COUNT
+								=> $this->datasetCollection( self::kDDICT_MOTHER_ID )
+									->count( [
+										self::kCOLLECTION_OFFSET_HOUSEHOLD_ID
+										=> $document[ '_id' ]
+									] ) ] ]
+						);
+
+			} // Has mother collection.
+
+			//
+			// Missing mother collection.
+			//
+			else
+				throw new RuntimeException(
+					"Mother collection not yet loaded." );						// !@! ==>
+
+		} // Has household collection.
+
+		//
+		// Missing household collection.
+		//
+		else
+			throw new RuntimeException(
+				"Household collection not yet loaded." );						// !@! ==>
+
+	} // SetMotherCount.
+
+
+
+/*=======================================================================================
+ *																						*
+ *								PUBLIC MERGE INTERFACE									*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	MergeSurvey																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Merge survey.</h4>
+	 *
+	 * This method will merge the child, mother and household surveys into a single
+	 * dataset. The method expects all tests to have passed, or an exception will be raised.
+	 *
+	 * @throws RuntimeException
+	 */
+	public function MergeSurvey()
+	{
+		//
+		// Check child status.
+		//
+		$status = $this->ChildDatasetStatus();
+		if( ! ($status & self::kSTATUS_CHECKED_REFS ) )
+			throw new RuntimeException(
+				"Must run all checks on child dataset before merging." );		// !@! ==>
+		if( $status & self::kSTATUS_DUPLICATE_COLUMNS )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are duplicate columns in child dataset." );				// !@! ==>
+		if( $status & self::kSTATUS_DUPLICATE_ENTRIES )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are duplicate entries in child dataset." );				// !@! ==>
+		if( $status & self::kSTATUS_INVALID_REFERENCES )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are invalid references in child dataset." );				// !@! ==>
+
+		//
+		// Check mother status.
+		//
+		$status = $this->MotherDatasetStatus();
+		if( ! ($status & self::kSTATUS_CHECKED_REFS ) )
+			throw new RuntimeException(
+				"Must run all checks on mother dataset before merging." );		// !@! ==>
+		if( $status & self::kSTATUS_DUPLICATE_COLUMNS )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are duplicate columns in mother dataset." );				// !@! ==>
+		if( $status & self::kSTATUS_DUPLICATE_ENTRIES )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are duplicate entries in mother dataset." );				// !@! ==>
+		if( $status & self::kSTATUS_INVALID_REFERENCES )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are invalid references in mother dataset." );			// !@! ==>
+
+		//
+		// Check household status.
+		//
+		$status = $this->HouseholdDatasetStatus();
+		if( ! ($status & self::kSTATUS_CHECKED_DUPS ) )
+			throw new RuntimeException(
+				"Must run all checks on household dataset before merging." );	// !@! ==>
+		if( $status & self::kSTATUS_DUPLICATE_COLUMNS )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are duplicate columns in household dataset." );			// !@! ==>
+		if( $status & self::kSTATUS_DUPLICATE_ENTRIES )
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"there are duplicate entries in household dataset." );			// !@! ==>
+
+		//
+		// Check child dataset.
+		//
+		if( $this->datasetCollection( self::kDDICT_CHILD_ID )->count() )
+		{
+			//
+			// Check mother dataset.
+			//
+			if( $this->datasetCollection( self::kDDICT_MOTHER_ID )->count() )
+			{
+				//
+				// Check household dataset.
+				//
+				if( $this->datasetCollection( self::kDDICT_HOUSEHOLD_ID )->count() )
+				{
+					//
+					// Clear survey dataset.
+					//
+					$this->mSurvey->drop();
+
+					//
+					// Select default fields.
+					//
+					$child_fields = $this->getChildFields();
+					$mother_fields = $this->getMotherFields();
+					$household_fields = $this->getHouseholdFields();
+
+					//
+					// Iterate children.
+					//
+					$cursor = $this->datasetCollection( self::kDDICT_CHILD_ID )->find();
+					foreach( $cursor as $child )
+					{
+						//
+						// Init document.
+						//
+						$document = [ '_id' => $child[ '_id' ] ];
+
+						//
+						// Set default group identifiers.
+						//
+						$document[ self::kCOLLECTION_OFFSET_DATE ]
+							= $child[ $this->ChildDatasetDateOffset() ];
+						$document[ self::kCOLLECTION_OFFSET_LOCATION ]
+							= $child[ $this->ChildDatasetLocationOffset() ];
+						$document[ self::kCOLLECTION_OFFSET_TEAM ]
+							= $child[ $this->ChildDatasetTeamOffset() ];
+						$document[ self::kCOLLECTION_OFFSET_CLUSTER ]
+							= $child[ $this->ChildDatasetClusterOffset() ];
+						$document[ self::kCOLLECTION_OFFSET_HOUSEHOLD ]
+							= $child[ $this->ChildDatasetHouseholdOffset() ];
+						$document[ self::kCOLLECTION_OFFSET_MOTHER ]
+							= $child[ $this->ChildDatasetMotherOffset() ];
+						$document[ self::kCOLLECTION_OFFSET_IDENTIFIER ]
+							= $child[ $this->ChildDatasetIdentifierOffset() ];
+
+						//
+						// Load child fields.
+						//
+						foreach( $child_fields as $field )
+						{
+							if( array_key_exists( $field, $child ) )
+								$document[ $field ] = $child[ $field ];
+						}
+
+						//
+						// Set mother ID.
+						//
+						$document[ self::kCOLLECTION_OFFSET_MOTHER_ID ]
+							= $child[ self::kCOLLECTION_OFFSET_MOTHER_ID ];
+
+						//
+						// Get mother.
+						//
+						$mother =
+							$this->datasetCollection( self::kDDICT_MOTHER_ID )
+								->findOne( [
+									'_id' => $child[ self::kCOLLECTION_OFFSET_MOTHER_ID ]
+								] );
+
+						//
+						// Load mother fields.
+						//
+						foreach( $mother_fields as $field )
+						{
+							if( array_key_exists( $field, $mother ) )
+								$document[ $field ] = $mother[ $field ];
+						}
+
+						//
+						// Set household ID.
+						//
+						$document[ self::kCOLLECTION_OFFSET_HOUSEHOLD_ID ]
+							= $child[ self::kCOLLECTION_OFFSET_HOUSEHOLD_ID ];
+
+						//
+						// Get household.
+						//
+						$household =
+							$this->datasetCollection( self::kDDICT_HOUSEHOLD_ID )
+								->findOne( [
+									'_id' => $child[ self::kCOLLECTION_OFFSET_HOUSEHOLD_ID ]
+								] );
+
+						//
+						// Load household fields.
+						//
+						foreach( $household_fields as $field )
+						{
+							if( array_key_exists( $field, $household ) )
+								$document[ $field ] = $household[ $field ];
+						}
+
+						//
+						// Save document.
+						//
+						$this->mSurvey->insertOne( $document );
+
+					} // Iterating children.
+
+				} // Has households.
+
+				else
+					throw new RuntimeException(
+						"Cannot merge: " .
+						"empty household dataset." );							// !@! ==>
+
+			} // Has mothers.
+
+			else
+				throw new RuntimeException(
+					"Cannot merge: " .
+					"empty mother dataset." );									// !@! ==>
+
+		} // Has children.
+
+		else
+			throw new RuntimeException(
+				"Cannot merge: " .
+				"empty children dataset." );									// !@! ==>
+
+	} // MergeSurvey.
+
+
 
 /*=======================================================================================
  *																						*
@@ -4964,7 +5307,7 @@ class SMARTLoader
 					// Set update commands.
 					//
 					$criteria = [
-						'$set' => [ self::kCOLLECTION_OFFSET_MOTHER => $mother[ '_id' ] ]
+						'$set' => [ self::kCOLLECTION_OFFSET_MOTHER_ID => $mother[ '_id' ] ]
 					];
 
 					//
@@ -5313,7 +5656,7 @@ class SMARTLoader
 					//
 					$criteria = [
 						'$set' => [
-							self::kCOLLECTION_OFFSET_HOUSEHOLD => $household[ '_id' ]
+							self::kCOLLECTION_OFFSET_HOUSEHOLD_ID => $household[ '_id' ]
 						]
 					];
 
@@ -5508,6 +5851,129 @@ class SMARTLoader
 			"Invalid dataset selector [$theDataset]." );						// !@! ==>
 
 	} // originalCollection.
+
+
+
+/*=======================================================================================
+ *																						*
+ *									PROTECTED UTILITIES									*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	getChildFields																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Get significant child fields.</h4>
+	 *
+	 * This method can be used to retrieve the list of child collection fields excluding
+	 * default fields.
+	 *
+	 * The method assumes all required information is loaded into the object.
+	 *
+	 * @return array
+	 */
+	protected function getChildFields()
+	{
+		//
+		// Init default fields.
+		//
+		$defaults = [
+			$this->ChildDatasetDateOffset(),
+			$this->ChildDatasetLocationOffset(),
+			$this->ChildDatasetTeamOffset(),
+			$this->ChildDatasetClusterOffset(),
+			$this->ChildDatasetHouseholdOffset(),
+			$this->ChildDatasetMotherOffset(),
+			$this->ChildDatasetIdentifierOffset()
+		];
+
+		return
+			array_diff(
+				array_keys( $this->ChildDatasetFields() ),
+				$defaults,
+				[ self::kCOLLECTION_OFFSET_HOUSEHOLD_ID,
+				  self::kCOLLECTION_OFFSET_MOTHER_ID ]
+			);																		// ==>
+
+	} // getChildFields.
+
+
+	/*===================================================================================
+	 *	getMotherFields																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Get significant mother fields.</h4>
+	 *
+	 * This method can be used to retrieve the list of mother collection fields excluding
+	 * default fields.
+	 *
+	 * The method assumes all required information is loaded into the object.
+	 *
+	 * @return array
+	 */
+	protected function getMotherFields()
+	{
+		//
+		// Init default fields.
+		//
+		$defaults = [
+			$this->MotherDatasetDateOffset(),
+			$this->MotherDatasetLocationOffset(),
+			$this->MotherDatasetTeamOffset(),
+			$this->MotherDatasetClusterOffset(),
+			$this->MotherDatasetHouseholdOffset(),
+			$this->MotherDatasetIdentifierOffset()
+		];
+
+		return
+			array_diff(
+				array_keys( $this->MotherDatasetFields() ),
+				$defaults,
+				[ self::kCOLLECTION_OFFSET_HOUSEHOLD_ID ]
+			);																		// ==>
+
+	} // getMotherFields.
+
+
+	/*===================================================================================
+	 *	getHouseholdFields																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Get significant mother fields.</h4>
+	 *
+	 * This method can be used to retrieve the list of mother collection fields excluding
+	 * default fields.
+	 *
+	 * The method assumes all required information is loaded into the object.
+	 *
+	 * @return array
+	 */
+	protected function getHouseholdFields()
+	{
+		//
+		// Init default fields.
+		//
+		$defaults = [
+			$this->HouseholdDatasetDateOffset(),
+			$this->HouseholdDatasetLocationOffset(),
+			$this->HouseholdDatasetTeamOffset(),
+			$this->HouseholdDatasetClusterOffset(),
+			$this->HouseholdDatasetIdentifierOffset()
+		];
+
+		return
+			array_diff(
+				array_keys( $this->HouseholdDatasetFields() ),
+				$defaults
+			);																		// ==>
+
+	} // getHouseholdFields.
 
 
 

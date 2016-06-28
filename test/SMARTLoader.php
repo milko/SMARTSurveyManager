@@ -505,6 +505,28 @@ if( $test->MotherDatasetStatus() & SMARTLoader::kSTATUS_INVALID_REFERENCES )
 	}
 }
 
+echo( "\n====================================================================================\n\n" );
+
+//
+// Set child count.
+//
+echo( '$test->SetChildCount();' . "\n" );
+$test->SetChildCount();
+
+//
+// Set mother count.
+//
+echo( '$test->SetMotherCount();' . "\n" );
+$test->SetMotherCount();
+
+echo( "\n====================================================================================\n\n" );
+
+//
+// Merge survey.
+//
+echo( '$test->MergeSurvey();' . "\n" );
+$test->MergeSurvey();
+
 
 ?>
 
