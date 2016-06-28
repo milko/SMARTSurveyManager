@@ -436,12 +436,62 @@ class SMARTLoader
 	 * <h4>Data dictionary dataset duplicate entries.</h4>
 	 *
 	 * This constant holds the <em>data dictionary offset</em> for the element that holds
-	 * the <em>list of duplicate dataset entries</em>, it is an array that contains the list
-	 * of duplicate records.
+	 * the <em>list of duplicate dataset entries</em>, it is an array structured as
+	 * follows:
+	 *
+	 * <ul>
+	 * 	<li><em>index</em>: The array index holds the duplicates group identifier.
+	 * 	 <ul>
+	 * 		<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding
+	 * 			the list of identifiers for the group: the location, team, cluster and unit
+	 * 			identifier, and, depending on the unit, the household and/or the mother
+	 * 			identifier.
+	 * 		<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding
+	 * 			the list of duplicate rows for the current group.
+	 * 	 </ul>
+	 * </ul>
 	 *
 	 * @var string
 	 */
 	const kDDICT_ENTRY_DUPS = 'entry_dups';
+
+	/**
+	 * <h4>Data dictionary dataset invalid mother references.</h4>
+	 *
+	 * This constant holds the <em>data dictionary offset</em> for the element that holds
+	 * the <em>list of invalid mother references</em>, it is an array structured as
+	 * follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding the
+	 * 		list of identifiers for the mother reference: the location, team, cluster,
+	 * 		household and mother numbers.
+	 * 	<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding the list of
+	 * 		rows featuring the invalid reference.
+	 * </ul>
+	 *
+	 * @var string
+	 */
+	const kDDICT_INVALID_MOTHERS = 'invalid_mothers';
+
+	/**
+	 * <h4>Data dictionary dataset invalid household references.</h4>
+	 *
+	 * This constant holds the <em>data dictionary offset</em> for the element that holds
+	 * the <em>list of invalid household references</em>, it is an array structured as
+	 * follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding the
+	 * 		list of identifiers for the household reference: the location, team, cluster
+	 * 		and household number.
+	 * 	<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding the list of
+	 * 		rows featuring the invalid reference.
+	 * </ul>
+	 *
+	 * @var string
+	 */
+	const kDDICT_INVALID_HOUSEHOLDS = 'invalid_households';
 
 	/**
 	 * <h4>Data dictionary dataset fields.</h4>
@@ -609,7 +659,7 @@ class SMARTLoader
 	 *
 	 * @var string
 	 */
-	const kDUPLICATES_CLUSTER = 'cluster';
+	const kGROUP_CLUSTER = 'group_cluster';
 
 	/**
 	 * <h4>Duplicate rows.</h4>
@@ -619,7 +669,7 @@ class SMARTLoader
 	 *
 	 * @var string
 	 */
-	const kDUPLICATES_ROWS = 'rows';
+	const kGROUP_ROWS = 'group_rows';
 
 	/**
 	 * <h4>Dataset idle status.</h4>
@@ -2375,6 +2425,99 @@ class SMARTLoader
 	} // HouseholdDatasetDuplicateEntries.
 
 
+	/*===================================================================================
+	 *	ChildDatasetInvalidMothers														*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set or retrieve child invalid mother references.</h4>
+	 *
+	 * This method can be used to manage the child data dictionary invalid mother
+	 * references, this element holds the list of invalid mother references.
+	 *
+	 * The method expects a single parameter that represents the new value, or the
+	 * operation:
+	 *
+	 * <ul>
+	 * 	<li><tt>NULL</tt>: Retrieve current value.
+	 * 	<li><i>array</i>: Set new value.
+	 * </ul>
+	 *
+	 * @param array|NULL			$theValue			New value or operation.
+	 * @return array				Child dataset invalid mother references.
+	 *
+	 * @uses dictionaryList()
+	 */
+	public function ChildDatasetInvalidMothers( $theValue = NULL )
+	{
+		return $this->dictionaryList(
+			self::kDDICT_CHILD_ID, self::kDDICT_INVALID_MOTHERS, $theValue );		// ==>
+
+	} // ChildDatasetInvalidMothers.
+
+
+	/*===================================================================================
+	 *	ChildDatasetInvalidHouseholds													*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set or retrieve child invalid household references.</h4>
+	 *
+	 * This method can be used to manage the child data dictionary invalid household
+	 * references, this element holds the list of invalid household references.
+	 *
+	 * The method expects a single parameter that represents the new value, or the
+	 * operation:
+	 *
+	 * <ul>
+	 * 	<li><tt>NULL</tt>: Retrieve current value.
+	 * 	<li><i>array</i>: Set new value.
+	 * </ul>
+	 *
+	 * @param array|NULL			$theValue			New value or operation.
+	 * @return array				Child dataset invalid household references.
+	 *
+	 * @uses dictionaryList()
+	 */
+	public function ChildDatasetInvalidHouseholds( $theValue = NULL )
+	{
+		return $this->dictionaryList(
+			self::kDDICT_CHILD_ID, self::kDDICT_INVALID_HOUSEHOLDS, $theValue );	// ==>
+
+	} // ChildDatasetInvalidHouseholds.
+
+
+	/*===================================================================================
+	 *	MotherDatasetInvalidHouseholds													*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set or retrieve mother invalid household references.</h4>
+	 *
+	 * This method can be used to manage the mother data dictionary invalid household
+	 * references, this element holds the list of invalid household references.
+	 *
+	 * The method expects a single parameter that represents the new value, or the
+	 * operation:
+	 *
+	 * <ul>
+	 * 	<li><tt>NULL</tt>: Retrieve current value.
+	 * 	<li><i>array</i>: Set new value.
+	 * </ul>
+	 *
+	 * @param array|NULL			$theValue			New value or operation.
+	 * @return array				Mother dataset invalid household references.
+	 *
+	 * @uses dictionaryList()
+	 */
+	public function MotherDatasetInvalidHouseholds( $theValue = NULL )
+	{
+		return $this->dictionaryList(
+			self::kDDICT_MOTHER_ID, self::kDDICT_INVALID_HOUSEHOLDS, $theValue );	// ==>
+
+	} // MotherDatasetInvalidHouseholds.
+
+
 
 /*=======================================================================================
  *																						*
@@ -2850,6 +2993,108 @@ class SMARTLoader
 	} // CheckHouseholdDatasetDuplicates.
 
 
+	/*===================================================================================
+	 *	CheckChildDatasetRelatedMothers													*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Check child dataset related mothers.</h4>
+	 *
+	 * This method can be used to identify invalid mother references in the child dataset,
+	 * the method will load the {@link kDDICT_INVALID_MOTHERS} with an array structured as
+	 * follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding the
+	 * 		list of identifiers for the mother reference: the location, team, cluster,
+	 * 		household and mother numbers.
+	 * 	<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding the list of
+	 * 		rows featuring the invalid reference rows.
+	 * </ul>
+	 *
+	 * The method will return the {@link kSTATUS_CHECKED_REFS} status code if no invalid
+	 * references were found, or the {@link kSTATUS_INVALID_REFERENCES} status code if
+	 * invalid references were found.
+	 *
+	 * @return int					Status code.
+	 *
+	 * @uses checkDatasetInvalidMothers()
+	 */
+	public function CheckChildDatasetRelatedMothers()
+	{
+		return $this->checkDatasetInvalidMothers( self::kDDICT_CHILD_ID );			// ==>
+
+	} // CheckChildDatasetRelatedMothers.
+
+
+	/*===================================================================================
+	 *	CheckChildDatasetRelatedHouseholds												*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Check child dataset related households.</h4>
+	 *
+	 * This method can be used to identify invalid household references in the child
+	 * dataset, the method will load the {@link kDDICT_INVALID_HOUSEHOLDS} with an array
+	 * structured as follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding the
+	 * 		list of identifiers for the household reference: the location, team, cluster and
+	 * 		the household number.
+	 * 	<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding the list of
+	 * 		rows featuring the invalid references.
+	 * </ul>
+	 *
+	 * The method will return the {@link kSTATUS_CHECKED_REFS} status code if no invalid
+	 * references were found, or the {@link kSTATUS_INVALID_REFERENCES} status code if
+	 * invalid references were found.
+	 *
+	 * @return int					Status code.
+	 *
+	 * @uses checkDatasetInvalidHouseholds()
+	 */
+	public function CheckChildDatasetRelatedHouseholds()
+	{
+		return $this->checkDatasetInvalidHouseholds( self::kDDICT_CHILD_ID );		// ==>
+
+	} // CheckChildDatasetRelatedHouseholds.
+
+
+	/*===================================================================================
+	 *	CheckMotherDatasetRelatedHouseholds												*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Check mother dataset related households.</h4>
+	 *
+	 * This method can be used to identify invalid household references in the mother
+	 * dataset, the method will load the {@link kDDICT_INVALID_HOUSEHOLDS} with an array
+	 * structured as follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding the
+	 * 		list of identifiers for the household reference: the location, team, cluster and
+	 * 		the household number.
+	 * 	<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding the list of
+	 * 		rows featuring the invalid references.
+	 * </ul>
+	 *
+	 * The method will return the {@link kSTATUS_CHECKED_REFS} status code if no invalid
+	 * references were found, or the {@link kSTATUS_INVALID_REFERENCES} status code if
+	 * invalid references were found.
+	 *
+	 * @return int					Status code.
+	 *
+	 * @uses checkDatasetInvalidHouseholds()
+	 */
+	public function CheckMotherDatasetRelatedHouseholds()
+	{
+		return $this->checkDatasetInvalidHouseholds( self::kDDICT_MOTHER_ID );		// ==>
+
+	} // CheckMotherDatasetRelatedHouseholds.
+
+
 
 /*=======================================================================================
  *																						*
@@ -2876,13 +3121,32 @@ class SMARTLoader
 	 */
 	protected function newDataDictionary( string $theIdentifier )
 	{
-		return [
-			'_id'						=> $theIdentifier,
-			self::kDDICT_STATUS			=> self::kSTATUS_IDLE,
-			self::kDDICT_COLUMNS		=> [],
-			self::kDDICT_COLUMN_DUPS	=> [],
-			self::kDDICT_FIELDS			=> []
-		];																			// ==>
+		//
+		// Init common fields.
+		//
+		$document = [
+			'_id'							=> $theIdentifier,
+			self::kDDICT_STATUS				=> self::kSTATUS_IDLE,
+			self::kDDICT_FIELDS				=> [],
+			self::kDDICT_COLUMNS			=> [],
+			self::kDDICT_COLUMN_DUPS		=> [],
+			self::kDDICT_ENTRY_DUPS			=> [],
+		];
+
+		//
+		// Add related fields.
+		//
+		switch( $theIdentifier )
+		{
+			case self::kDDICT_CHILD_ID:
+				$document[ self::kDDICT_INVALID_MOTHERS ] = [];
+
+			case self::kDDICT_MOTHER_ID:
+				$document[ self::kDDICT_INVALID_HOUSEHOLDS ] = [];
+				break;
+		}
+
+		return $document;															// ==>
 
 	} // newDataDictionary.
 
@@ -3585,10 +3849,22 @@ class SMARTLoader
 			//
 			// Reset data dictionary.
 			//
-			$this->datasetStatus( $theDataset, NULL, self::kSTATUS_IDLE );
-			$this->dictionaryList( $theDataset, self::kDDICT_FIELDS, [] );
-			$this->dictionaryList( $theDataset, self::kDDICT_COLUMNS, [] );
-			$this->dictionaryList( $theDataset, self::kDDICT_COLUMN_DUPS, [] );
+			switch( $theDataset )
+			{
+				case self::kDDICT_CHILD_ID:
+					$this->dictionaryList( $theDataset, self::kDDICT_INVALID_MOTHERS, [] );
+
+				case self::kDDICT_MOTHER_ID:
+					$this->dictionaryList( $theDataset, self::kDDICT_INVALID_HOUSEHOLDS, [] );
+
+				default:
+					$this->datasetStatus( $theDataset, NULL, self::kSTATUS_IDLE );
+					$this->dictionaryList( $theDataset, self::kDDICT_FIELDS, [] );
+					$this->dictionaryList( $theDataset, self::kDDICT_COLUMNS, [] );
+					$this->dictionaryList( $theDataset, self::kDDICT_COLUMN_DUPS, [] );
+					$this->dictionaryList( $theDataset, self::kDDICT_ENTRY_DUPS, [] );
+					break;
+			}
 
 			//
 			// Iterate rows.
@@ -3721,10 +3997,32 @@ class SMARTLoader
 				} // Iterating header row.
 
 				//
+				// Reset data dictionary.
+				//
+				switch( $theDataset )
+				{
+					case self::kDDICT_CHILD_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_MOTHERS, [] );
+
+					case self::kDDICT_MOTHER_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_HOUSEHOLDS, [] );
+				}
+
+				//
 				// Load columns and errors.
 				//
 				$this->dictionaryList( $theDataset, self::kDDICT_COLUMNS, $header );
 				$this->dictionaryList( $theDataset, self::kDDICT_COLUMN_DUPS, $errors );
+				$this->dictionaryList( $theDataset, self::kDDICT_ENTRY_DUPS, [] );
+				switch( $theDataset )
+				{
+					case self::kDDICT_CHILD_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_MOTHERS, [] );
+
+					case self::kDDICT_MOTHER_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_HOUSEHOLDS, [] );
+						break;
+				}
 
 				//
 				// Handle duplicates.
@@ -3904,6 +4202,16 @@ class SMARTLoader
 				// Update data dictionary.
 				//
 				$this->dictionaryList( $theDataset, self::kDDICT_FIELDS, $fields );
+				$this->dictionaryList( $theDataset, self::kDDICT_ENTRY_DUPS, [] );
+				switch( $theDataset )
+				{
+					case self::kDDICT_CHILD_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_MOTHERS, [] );
+
+					case self::kDDICT_MOTHER_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_HOUSEHOLDS, [] );
+						break;
+				}
 
 			} // Has columns.
 
@@ -4116,11 +4424,15 @@ class SMARTLoader
 	 * {@link kDDICT_COLUMN_DUPS} entry as follows:
 	 *
 	 * <ul>
-	 *	<li><tt>{@link kTYPE_DUPLICATES_CLUSTER}</tt>: It contains an array having as key
-	 *		the column offset and as value the column value of the location, team, cluster,
-	 *		identifier and, if relevant, the household and/or the mother identifiers.
-	 *	<li><tt>{@link kTYPE_DUPLICATES_ROWS}</tt>: It contains an array holding the list
-	 *		of rows where the duplicates can be found.
+	 * 	<li><em>index</em>: The array index holds the duplicates group identifier.
+	 * 	 <ul>
+	 * 		<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding
+	 * 			the list of identifiers for the group: the location, team, cluster and unit
+	 * 			identifier, and, depending on the unit, the household and/or the mother
+	 * 			identifier.
+	 * 		<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding
+	 * 			the list of duplicate rows for the current group.
+	 * 	 </ul>
 	 * </ul>
 	 *
 	 * The array key of the {@link kDDICT_COLUMN_DUPS} entry represents the duplicate
@@ -4226,6 +4538,20 @@ class SMARTLoader
 						"Identifier field not yet declared." );					// !@! ==>
 
 				//
+				// Reset data dictionary.
+				//
+				$this->dictionaryList( $theDataset, self::kDDICT_ENTRY_DUPS, [] );
+				switch( $theDataset )
+				{
+					case self::kDDICT_CHILD_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_MOTHERS, [] );
+
+					case self::kDDICT_MOTHER_ID:
+						$this->dictionaryList( $theDataset, self::kDDICT_INVALID_HOUSEHOLDS, [] );
+						break;
+				}
+
+				//
 				// Reset error status.
 				//
 				$this->datasetStatus(
@@ -4260,7 +4586,7 @@ class SMARTLoader
 				//
 				$pipeline[] = [
 					'$group' => [ '_id' => $selection,
-								  'count' => [ '$sum' => 1 ] ]
+						'count' => [ '$sum' => 1 ] ]
 				];
 
 				//
@@ -4274,9 +4600,9 @@ class SMARTLoader
 				// Aggregate.
 				//
 				$duplicates =
-						$this->datasetCollection( $theDataset )
-							->aggregate( $pipeline, [ 'allowDiskUse' => TRUE ]
-					);
+					$this->datasetCollection( $theDataset )
+						->aggregate( $pipeline, [ 'allowDiskUse' => TRUE ]
+						);
 
 				//
 				// Iterate duplicate groups.
@@ -4295,8 +4621,8 @@ class SMARTLoader
 						// Init duplicates entry.
 						//
 						$dups[ $duplicate_id ] = [
-							self::kDUPLICATES_CLUSTER => $duplicate,
-							self::kDUPLICATES_ROWS => []
+							self::kGROUP_CLUSTER => $duplicate,
+							self::kGROUP_ROWS => []
 						];
 
 						//
@@ -4307,7 +4633,7 @@ class SMARTLoader
 								$this->datasetCollection( $theDataset )->find( $duplicate )
 							);
 						foreach( $cursor as $document )
-							$dups[ $duplicate_id ][ self::kDUPLICATES_ROWS ][]
+							$dups[ $duplicate_id ][ self::kGROUP_ROWS ][]
 								= $document[ '_id' ];
 
 						//
@@ -4370,6 +4696,705 @@ class SMARTLoader
 		return $this->datasetStatus( $theDataset );									// ==>
 
 	} // checkDatasetDuplicateEntries.
+
+
+	/*===================================================================================
+	 *	checkDatasetInvalidMothers														*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Check for invalid mother references.</h4>
+	 *
+	 * This method is used by the public interface to check whether the dataset has
+	 * invalid mother references, the method expects a single parameter that represents the
+	 * dataset identifier, by default it should be {@link kDDICT_CHILD_ID}.
+	 *
+	 * The method will raise an exception if the the mother dataset was not yet loaded and
+	 * if the location, team, cluster, household and mother identifiers were not declared.
+	 *
+	 * The method will return the {@link kSTATUS_CHECKED_REFS} status code if no invalid
+	 * references were found, or the {@link kSTATUS_INVALID_REFERENCES} status code if
+	 * invalid references were found: in that case the method will fill the data dictionary
+	 * {@link kDDICT_INVALID_MOTHERS} entry as follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding the
+	 * 		list of identifiers for the mother reference: the location, team, cluster,
+	 * 		household and mother numbers.
+	 * 	<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding the list of
+	 * 		rows featuring the invalid reference rows.
+	 * </ul>
+	 *
+	 * The method will also load the {@link kCOLLECTION_OFFSET_MOTHER} mother key into the
+	 * child collection.
+	 *
+	 * @param string				$theDataset			Dataset identifier.
+	 * @return int					Status code.
+	 *
+	 * @throws RuntimeException
+	 */
+	protected function checkDatasetInvalidMothers( string $theDataset = self::kDDICT_CHILD_ID )
+	{
+		//
+		// Check dataset fields.
+		//
+		$columns = $this->dictionaryList( $theDataset, self::kDDICT_FIELDS );
+		if( count( $columns  ) )
+		{
+			//
+			// Check dataset collection.
+			//
+			if( $this->datasetCollection( $theDataset )->count() )
+			{
+				//
+				// Check mother collection.
+				//
+				if( $this->datasetCollection( self::kDDICT_MOTHER_ID )->count() )
+				{
+					//
+					// Init local storage.
+					//
+					$child_fields = $mother_fields = [];
+
+					//
+					// Get location field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_LOCATION )) !== NULL )
+						$child_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child location field not yet declared." );			// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_MOTHER_ID,
+								self::kDATASET_OFFSET_LOCATION )) !== NULL )
+						$mother_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother location field not yet declared." );		// !@! ==>
+
+					//
+					// Get team field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_TEAM )) !== NULL )
+						$child_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child team field not yet declared." );				// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_MOTHER_ID,
+								self::kDATASET_OFFSET_TEAM )) !== NULL )
+						$mother_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother team field not yet declared." );			// !@! ==>
+
+					//
+					// Get cluster field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_CLUSTER )) !== NULL )
+						$child_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child cluster field not yet declared." );			// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_MOTHER_ID,
+								self::kDATASET_OFFSET_CLUSTER )) !== NULL )
+						$mother_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother cluster field not yet declared." );			// !@! ==>
+
+					//
+					// Get household field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_HOUSEHOLD )) !== NULL )
+						$child_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child household field not yet declared." );		// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_MOTHER_ID,
+								self::kDATASET_OFFSET_HOUSEHOLD )) !== NULL )
+						$mother_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother household field not yet declared." );		// !@! ==>
+
+					//
+					// Get mother field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_MOTHER )) !== NULL )
+						$child_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child mother field not yet declared." );			// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_MOTHER_ID,
+								self::kDATASET_OFFSET_IDENTIFIER )) !== NULL )
+						$mother_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother identifier field not yet declared." );		// !@! ==>
+
+				} // Has mother collection.
+
+				//
+				// Missing mother dataset collection.
+				//
+				else
+					throw new RuntimeException(
+						"Mother dataset collection not yet loaded." );			// !@! ==>
+
+			} // Has child collection.
+
+			//
+			// Missing child dataset collection.
+			//
+			else
+				throw new RuntimeException(
+					"Child dataset collection not yet loaded." );				// !@! ==>
+
+		} // Has fields.
+
+		//
+		// Missing fields.
+		//
+		else
+			throw new RuntimeException(
+				"Dataset fields not yet loaded." );								// !@! ==>
+
+		//
+		// Reset data dictionary.
+		//
+		$this->dictionaryList( $theDataset, self::kDDICT_INVALID_MOTHERS, [] );
+
+		//
+		// Reset error status.
+		//
+		$this->datasetStatus(
+			$theDataset,
+			FALSE,
+			self::kSTATUS_INVALID_REFERENCES
+		);
+
+		//
+		// Reset operation status.
+		//
+		$this->datasetStatus(
+			$theDataset,
+			FALSE,
+			self::kSTATUS_CHECKED_REFS
+		);
+
+		//
+		// Init pipeline.
+		//
+		$pipeline = [];
+
+		//
+		// Init selection group.
+		//
+		$selection = [];
+		foreach( $child_fields as $field )
+			$selection[ $field ] = '$' . $field;
+
+		//
+		// Add group.
+		//
+		$pipeline[] = [
+			'$group' => [ '_id' => $selection ]
+		];
+
+		//
+		// Aggregate.
+		//
+		$related =
+			$this->datasetCollection( $theDataset )
+				->aggregate( $pipeline, [ 'allowDiskUse' => TRUE ]
+				);
+
+		//
+		// Iterate mother references.
+		//
+		$rels = [];
+		foreach( $related as $relation )
+		{
+			//
+			// Normalise relation.
+			//
+			$relation = $relation[ '_id' ]->getArrayCopy();
+			if( count( $relation ) )
+			{
+				//
+				// Set query.
+				//
+				$query = [];
+				for( $i = 0; $i < count( $child_fields ); $i++ )
+					$query[ $mother_fields[ $i ] ]
+						= $relation[ $child_fields[ $i ] ];
+
+				//
+				// Check mother record.
+				//
+				$mother = $this->datasetCollection( self::kDDICT_MOTHER_ID )
+					->findOne( $query );
+				if( $mother !== NULL )
+				{
+					//
+					// Set update commands.
+					//
+					$criteria = [
+						'$set' => [ self::kCOLLECTION_OFFSET_MOTHER => $mother[ '_id' ] ]
+					];
+
+					//
+					// Update documents.
+					//
+					$this->datasetCollection( $theDataset )
+						->updateMany( $relation, $criteria );
+
+				} // Found mother.
+
+				//
+				// Handle missing mother.
+				//
+				else
+				{
+					//
+					// Add invalid reference.
+					//
+					$index = count( $rels );
+					$rels[ $index ] = [];
+					$rels[ $index ][ self::kGROUP_CLUSTER ] = $relation;
+					$rels[ $index ][ self::kGROUP_ROWS ] = [];
+
+					//
+					// Select offending rows.
+					//
+					$documents = $this->datasetCollection( $theDataset )->find( $relation );
+					foreach( $documents as $document )
+						$rels[ $index ][ self::kGROUP_ROWS ][]
+							= $document[ '_id' ];
+
+				} // Missing mother.
+
+			} // Got cluster group.
+
+		} // Iterating mother references.
+
+		//
+		// Set status.
+		//
+		$this->datasetStatus(
+			$theDataset,
+			TRUE,
+			self::kSTATUS_CHECKED_REFS
+		);
+
+		//
+		// Handle invalid references.
+		//
+		if( count( $rels ) )
+		{
+			//
+			// Set status.
+			//
+			$this->datasetStatus(
+				$theDataset,
+				TRUE,
+				self::kSTATUS_INVALID_REFERENCES
+			);
+
+			//
+			// Load invalid references in data dictionary.
+			//
+			$this->dictionaryList( $theDataset, self::kDDICT_INVALID_MOTHERS, $rels );
+
+		} // Found invalid references.
+
+		//
+		// Reset status.
+		//
+		else
+			$this->datasetStatus(
+				$theDataset,
+				FALSE,
+				self::kSTATUS_INVALID_REFERENCES
+			);
+
+		return $this->datasetStatus( $theDataset );									// ==>
+
+	} // checkDatasetInvalidMothers.
+
+
+	/*===================================================================================
+	 *	checkDatasetInvalidHouseholds													*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Check for invalid household references.</h4>
+	 *
+	 * This method is used by the public interface to check whether the dataset has
+	 * invalid household references, the method expects a single parameter that represents
+	 * the dataset identifier, by default it should be either {@link kDDICT_CHILD_ID} or
+	 * {@link kDDICT_MOTHER_ID}.
+	 *
+	 * The method will raise an exception if the the household dataset was not yet loaded
+	 * and if the location, team, cluster and household identifiers were not declared.
+	 *
+	 * The method will return the {@link kSTATUS_CHECKED_REFS} status code if no invalid
+	 * references were found, or the {@link kSTATUS_INVALID_REFERENCES} status code if
+	 * invalid references were found: in that case the method will fill the data dictionary
+	 * {@link kDDICT_INVALID_MOTHERS} entry as follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kGROUP_CLUSTER}</tt>: This element contains an array holding the
+	 * 		list of identifiers for the household reference: the location, team, cluster,
+	 * 		and household numbers.
+	 * 	<li><tt>{@link kGROUP_ROWS}</tt>: This element contains an array holding the list of
+	 * 		rows featuring the invalid reference rows.
+	 * </ul>
+	 *
+	 * The method will also load the {@link kCOLLECTION_OFFSET_HOUSEHOLD} household key into
+	 * the child or mother collection.
+	 *
+	 * @param string				$theDataset			Dataset identifier.
+	 * @return int					Status code.
+	 *
+	 * @throws RuntimeException
+	 * @throws InvalidArgumentException
+	 */
+	protected function checkDatasetInvalidHouseholds( string $theDataset )
+	{
+		//
+		// Check dataset.
+		//
+		switch( $theDataset )
+		{
+			case self::kDDICT_CHILD_ID:
+			case self::kDDICT_MOTHER_ID:
+				break;
+
+			default:
+				throw new InvalidArgumentException(
+					"Only child and mother dataset selectors are expected: " .
+					"provided [$theDataset]." );								// !@! ==>
+
+		} // Checked dataset.
+
+		//
+		// Check dataset fields.
+		//
+		$columns = $this->dictionaryList( $theDataset, self::kDDICT_FIELDS );
+		if( count( $columns  ) )
+		{
+			//
+			// Check dataset collection.
+			//
+			if( $this->datasetCollection( $theDataset )->count() )
+			{
+				//
+				// Check household collection.
+				//
+				if( $this->datasetCollection( self::kDDICT_HOUSEHOLD_ID )->count() )
+				{
+					//
+					// Init local storage.
+					//
+					$dataset_fields = $household_fields = [];
+
+					//
+					// Get location field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_LOCATION )) !== NULL )
+						$dataset_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child location field not yet declared." );			// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_HOUSEHOLD_ID,
+								self::kDATASET_OFFSET_LOCATION )) !== NULL )
+						$household_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother location field not yet declared." );		// !@! ==>
+
+					//
+					// Get team field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_TEAM )) !== NULL )
+						$dataset_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child team field not yet declared." );				// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_HOUSEHOLD_ID,
+								self::kDATASET_OFFSET_TEAM )) !== NULL )
+						$household_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother team field not yet declared." );			// !@! ==>
+
+					//
+					// Get cluster field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_CLUSTER )) !== NULL )
+						$dataset_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child cluster field not yet declared." );			// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_HOUSEHOLD_ID,
+								self::kDATASET_OFFSET_CLUSTER )) !== NULL )
+						$household_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother cluster field not yet declared." );			// !@! ==>
+
+					//
+					// Get household field.
+					//
+					if( ($tmp =
+							$this->datasetOffset(
+								$theDataset,
+								self::kDATASET_OFFSET_HOUSEHOLD )) !== NULL )
+						$dataset_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Child household field not yet declared." );		// !@! ==>
+					if( ($tmp =
+							$this->datasetOffset(
+								self::kDDICT_HOUSEHOLD_ID,
+								self::kDATASET_OFFSET_IDENTIFIER )) !== NULL )
+						$household_fields[] = $tmp;
+					else
+						throw new RuntimeException(
+							"Mother household field not yet declared." );		// !@! ==>
+
+				} // Has household collection.
+
+				//
+				// Missing household dataset collection.
+				//
+				else
+					throw new RuntimeException(
+						"Household dataset collection not yet loaded." );		// !@! ==>
+
+			} // Has dataset collection.
+
+			//
+			// Missing dataset collection.
+			//
+			else
+				throw new RuntimeException(
+					"Dataset collection not yet loaded." );						// !@! ==>
+
+		} // Has fields.
+
+		//
+		// Missing fields.
+		//
+		else
+			throw new RuntimeException(
+				"Dataset fields not yet loaded." );								// !@! ==>
+
+		//
+		// Reset data dictionary.
+		//
+		$this->dictionaryList( $theDataset, self::kDDICT_INVALID_HOUSEHOLDS, [] );
+
+		//
+		// Reset error status.
+		//
+		$this->datasetStatus(
+			$theDataset,
+			FALSE,
+			self::kSTATUS_INVALID_REFERENCES
+		);
+
+		//
+		// Reset operation status.
+		//
+		$this->datasetStatus(
+			$theDataset,
+			FALSE,
+			self::kSTATUS_CHECKED_REFS
+		);
+
+		//
+		// Init pipeline.
+		//
+		$pipeline = [];
+
+		//
+		// Init selection group.
+		//
+		$selection = [];
+		foreach( $dataset_fields as $field )
+			$selection[ $field ] = '$' . $field;
+
+		//
+		// Add group.
+		//
+		$pipeline[] = [
+			'$group' => [ '_id' => $selection ]
+		];
+
+		//
+		// Aggregate.
+		//
+		$related =
+			$this->datasetCollection( $theDataset )
+				->aggregate( $pipeline, [ 'allowDiskUse' => TRUE ]
+				);
+
+		//
+		// Iterate household references.
+		//
+		$rels = [];
+		foreach( $related as $relation )
+		{
+			//
+			// Normalise relation.
+			//
+			$relation = $relation[ '_id' ]->getArrayCopy();
+			if( count( $relation ) )
+			{
+				//
+				// Set query.
+				//
+				$query = [];
+				for( $i = 0; $i < count( $dataset_fields ); $i++ )
+					$query[ $household_fields[ $i ] ]
+						= $relation[ $dataset_fields[ $i ] ];
+
+				//
+				// Check mother record.
+				//
+				$household =
+					$this->datasetCollection(
+						self::kDDICT_HOUSEHOLD_ID )->findOne( $query );
+				if( $household !== NULL )
+				{
+					//
+					// Set update commands.
+					//
+					$criteria = [
+						'$set' => [
+							self::kCOLLECTION_OFFSET_HOUSEHOLD => $household[ '_id' ]
+						]
+					];
+
+					//
+					// Update documents.
+					//
+					$this->datasetCollection( $theDataset )
+						->updateMany( $relation, $criteria );
+
+				} // Found mother.
+
+				//
+				// Handle missing household.
+				//
+				else
+				{
+					//
+					// Add invalid reference.
+					//
+					$index = count( $rels );
+					$rels[ $index ] = [];
+					$rels[ $index ][ self::kGROUP_CLUSTER ] = $relation;
+					$rels[ $index ][ self::kGROUP_ROWS ] = [];
+
+					//
+					// Select offending rows.
+					//
+					$documents = $this->datasetCollection( $theDataset )->find( $relation );
+					foreach( $documents as $document )
+						$rels[ $index ][ self::kGROUP_ROWS ][]
+							= $document[ '_id' ];
+
+				} // Missing household.
+
+			} // Got cluster group.
+
+		} // Iterating household references.
+
+		//
+		// Set status.
+		//
+		$this->datasetStatus(
+			$theDataset,
+			TRUE,
+			self::kSTATUS_CHECKED_REFS
+		);
+
+		//
+		// Handle invalid references.
+		//
+		if( count( $rels ) )
+		{
+			//
+			// Set status.
+			//
+			$this->datasetStatus(
+				$theDataset,
+				TRUE,
+				self::kSTATUS_INVALID_REFERENCES
+			);
+
+			//
+			// Load invalid references in data dictionary.
+			//
+			$this->dictionaryList( $theDataset, self::kDDICT_INVALID_HOUSEHOLDS, $rels );
+
+		} // Found invalid references.
+
+		//
+		// Reset status.
+		//
+		else
+			$this->datasetStatus(
+				$theDataset,
+				FALSE,
+				self::kSTATUS_INVALID_REFERENCES
+			);
+
+		return $this->datasetStatus( $theDataset );									// ==>
+
+	} // checkDatasetInvalidHouseholds.
 
 
 

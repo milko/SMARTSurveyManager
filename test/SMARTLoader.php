@@ -442,6 +442,69 @@ if( $test->HouseholdDatasetStatus() & SMARTLoader::kSTATUS_DUPLICATE_ENTRIES )
 	print_r( $test->HouseholdDatasetDuplicateEntries() );
 }
 
+echo( "\n====================================================================================\n\n" );
+
+//
+// Check child invalid mother references.
+//
+echo( '$result = $test->CheckChildDatasetRelatedMothers();' . "\n" );
+$result = $test->CheckChildDatasetRelatedMothers();
+var_dump( $result );
+
+echo( "\n" );
+
+//
+// Check child invalid household references.
+//
+echo( '$result = $test->CheckChildDatasetRelatedHouseholds();' . "\n" );
+$result = $test->CheckChildDatasetRelatedHouseholds();
+var_dump( $result );
+
+//
+// Show status.
+//
+echo( "\nSTATUS:\n" );
+if( $test->ChildDatasetStatus() & SMARTLoader::kSTATUS_INVALID_REFERENCES )
+{
+	echo( "==> Has invalid references:\n" );
+	$list = $test->ChildDatasetInvalidMothers();
+	if( count( $list ) )
+	{
+		echo( "====> Invalid mothers:\n" );
+		print_r( $list );
+	}
+	$list = $test->ChildDatasetInvalidHouseholds();
+	if( count( $list ) )
+	{
+		echo( "====> Invalid households:\n" );
+		print_r( $list );
+	}
+}
+
+echo( "\n====================================================================================\n\n" );
+
+//
+// Check mother invalid household references.
+//
+echo( '$result = $test->CheckMotherDatasetRelatedHouseholds();' . "\n" );
+$result = $test->CheckMotherDatasetRelatedHouseholds();
+var_dump( $result );
+
+//
+// Show status.
+//
+echo( "\nSTATUS:\n" );
+if( $test->MotherDatasetStatus() & SMARTLoader::kSTATUS_INVALID_REFERENCES )
+{
+	echo( "==> Has invalid references:\n" );
+	$list = $test->MotherDatasetInvalidHouseholds();
+	if( count( $list ) )
+	{
+		echo( "====> Invalid households:\n" );
+		print_r( $list );
+	}
+}
+
 
 ?>
 
