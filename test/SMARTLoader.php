@@ -527,6 +527,14 @@ echo( "\n=======================================================================
 echo( '$test->MergeSurvey();' . "\n" );
 $test->MergeSurvey();
 
+echo( "\n====================================================================================\n\n" );
+
+//
+// Export survey.
+//
+echo( '$test->ExportSurvey( kPATH_LIBRARY_ROOT . \'test/SMART/Survey.xlsx\', SMARTLoader::kDATASET_SELECTOR_CHILD + SMARTLoader::kDATASET_SELECTOR_MOTHER + SMARTLoader::kDATASET_SELECTOR_HOUSEHOLD + SMARTLoader::kDATASET_SELECTOR_MERGED );' . "\n" );
+$test->ExportSurvey( kPATH_LIBRARY_ROOT . 'test/SMART/Survey.xlsx', SMARTLoader::kDATASET_SELECTOR_CHILD + SMARTLoader::kDATASET_SELECTOR_MOTHER + SMARTLoader::kDATASET_SELECTOR_HOUSEHOLD + SMARTLoader::kDATASET_SELECTOR_MERGED );
+
 
 ?>
 

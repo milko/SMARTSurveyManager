@@ -337,6 +337,42 @@ class SMARTLoader
 	const kCOLLECTION_OFFSET_MOTHER_COUNT = '@MOTHER_COUNT';
 
 	/**
+	 * <h4>Child dataset selector.</h4>
+	 *
+	 * This constant holds the <em>child dataset selector</em>.
+	 *
+	 * @var int
+	 */
+	const kDATASET_SELECTOR_CHILD = 0x00000001;
+
+	/**
+	 * <h4>Mother dataset selector.</h4>
+	 *
+	 * This constant holds the <em>mother dataset selector</em>.
+	 *
+	 * @var int
+	 */
+	const kDATASET_SELECTOR_MOTHER = 0x00000002;
+
+	/**
+	 * <h4>Household dataset selector.</h4>
+	 *
+	 * This constant holds the <em>household dataset selector</em>.
+	 *
+	 * @var int
+	 */
+	const kDATASET_SELECTOR_HOUSEHOLD = 0x00000004;
+
+	/**
+	 * <h4>Merged dataset selector.</h4>
+	 *
+	 * This constant holds the <em>merged dataset selector</em>.
+	 *
+	 * @var int
+	 */
+	const kDATASET_SELECTOR_MERGED = 0x00000008;
+
+	/**
 	 * <h4>Data dictionary child identifier.</h4>
 	 *
 	 * This constant holds the <em>unique identifier</em> of the <em>child data dictionary
@@ -373,23 +409,22 @@ class SMARTLoader
 	 * was loaded, processed or if it has errors:
 	 *
 	 * <ul>
-	 * 	<li><tt>{@link kDDICT_STATUS_IDLE}</tt>: Idle, the dataset has not yet been
-	 * 		declared.
-	 * 	<li><tt>{@link kDDICT_STATUS_LOADED}</tt>: Loaded, the dataset has been loaded in
-	 * 		the database.
-	 * 	<li><tt>{@link kDDICT_STATUS_CHECKED_DUPS}</tt>: Checked for duplicates, the dataset
-	 * 		was verified for duplicate entries.
-	 * 	<li><tt>{@link kDDICT_STATUS_CHECKED_REFS}</tt>: Checked for invalid references, the
-	 * 		dataset was verified for nvalid references.
-	 * 	<li><tt>{@link kDDICT_STATUS_STATS}</tt>: Loaded statistics, statistic information
-	 * 		was added to the dataset.
-	 * 	<li><tt>{@link kDDICT_STATUS_VALID}</tt>: Validated, the dataset was validated and
-	 * 		loaded into the final collection.
-	 * 	<li><tt>{@link kDDICT_STATUS_COLUMNS}</tt>: Duplicate columns, the dataset has
+	 * 	<li><tt>{@link kSTATUS_IDLE}</tt>: Idle, the dataset has not yet beendeclared.
+	 * 	<li><tt>{@link kSTATUS_LOADED}</tt>: Loaded, the dataset has been loaded in the
+	 * 		database.
+	 * 	<li><tt>{@link kSTATUS_CHECKED_DUPS}</tt>: Checked for duplicates, the dataset was
+	 * 		verified for duplicate entries.
+	 * 	<li><tt>{@link kSTATUS_CHECKED_REFS}</tt>: Checked for invalid references, the
+	 * 		dataset was verified for invalid references.
+	 * 	<li><tt>{@link kSTATUS_STATS}</tt>: Loaded statistics, statistic informationwas
+	 * 		added to the dataset.
+	 * 	<li><tt>{@link kSTATUS_VALID}</tt>: Validated, the dataset was validated and loaded
+	 * 		into the final collection.
+	 * 	<li><tt>{@link kSTATUS_DUPLICATE_COLUMNS}</tt>: Duplicate columns, the dataset has
 	 * 		duplicate columns and is not valid.
-	 * 	<li><tt>{@link kDDICT_STATUS_DUPLICATES}</tt>: Duplicate entries, the dataset has
+	 * 	<li><tt>{@link kSTATUS_DUPLICATE_ENTRIES}</tt>: Duplicate entries, the dataset has
 	 * 		duplicate entries and is not valid.
-	 * 	<li><tt>{@link kDDICT_STATUS_REFERENCES}</tt>: invalid references, the dataset has
+	 * 	<li><tt>{@link kSTATUS_INVALID_REFERENCES}</tt>: invalid references, the dataset has
 	 * 		invalid references and is not valid.
 	 * </ul>
 	 *
@@ -493,8 +528,8 @@ class SMARTLoader
 	 * 	 <ul>
 	 * 		<li><tt>{@link kDDICT_FIELD_KIND}</tt>: The data kind inferred when the dataset
 	 * 			was loaded.
-	 * 		<li><tt>{@link kDDICT_FIELD_TYPE}</tt>: The data type determined by the user.
-	 * 		<li><tt>{@link kDDICT_FIELD_NAME}</tt>: The standard field name used in the
+	 * 		<li><tt>{@link kFIELD_TYPE}</tt>: The data type determined by the user.
+	 * 		<li><tt>{@link kFIELD_NAME}</tt>: The standard field name used in the
 	 * 			final processed dataset.
 	 * 	 </ul>
 	 * </ul>
@@ -894,6 +929,12 @@ class SMARTLoader
 	 *
 	 * @uses Client()
 	 * @uses Database()
+	 * @uses Dictionary()
+	 * @uses Survey()
+	 * @uses Household()
+	 * @uses Mother()
+	 * @uses Child()
+	 * @uses InitDictionary()
 	 */
 	public function __construct( $theDatabase, $theDSN = self::kNAME_DSN )
 	{
@@ -943,8 +984,7 @@ class SMARTLoader
 	 * @param string				$theDSN				Data source name.
 	 * @param string				$theDatabase		Database name.
 	 *
-	 * @uses Client()
-	 * @uses Database()
+	 * @uses SaveDictionary()
 	 */
 	public function __destruct()
 	{
@@ -1505,7 +1545,10 @@ class SMARTLoader
 	public function ChildDatasetDateOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_CHILD_ID, self::kDATASET_OFFSET_DATE, $theValue );			// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDATASET_OFFSET_DATE,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetDateOffset.
 
@@ -1533,7 +1576,10 @@ class SMARTLoader
 	public function MotherDatasetDateOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDATASET_OFFSET_DATE, $theValue );		// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDATASET_OFFSET_DATE,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetDateOffset.
 
@@ -1561,7 +1607,10 @@ class SMARTLoader
 	public function HouseholdDatasetDateOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_HOUSEHOLD_ID, self::kDATASET_OFFSET_DATE, $theValue );		// ==>
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDATASET_OFFSET_DATE,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetDateOffset.
 
@@ -1589,7 +1638,10 @@ class SMARTLoader
 	public function ChildDatasetLocationOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_CHILD_ID, self::kDATASET_OFFSET_LOCATION, $theValue );		// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDATASET_OFFSET_LOCATION,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetLocationOffset.
 
@@ -1617,7 +1669,10 @@ class SMARTLoader
 	public function MotherDatasetLocationOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDATASET_OFFSET_LOCATION, $theValue );	// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDATASET_OFFSET_LOCATION,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetLocationOffset.
 
@@ -1645,7 +1700,10 @@ class SMARTLoader
 	public function HouseholdDatasetLocationOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_HOUSEHOLD_ID, self::kDATASET_OFFSET_LOCATION, $theValue );	// ==>
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDATASET_OFFSET_LOCATION,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetLocationOffset.
 
@@ -1673,7 +1731,10 @@ class SMARTLoader
 	public function ChildDatasetTeamOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_CHILD_ID, self::kDATASET_OFFSET_TEAM, $theValue );			// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDATASET_OFFSET_TEAM,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetTeamOffset.
 
@@ -1701,7 +1762,10 @@ class SMARTLoader
 	public function MotherDatasetTeamOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDATASET_OFFSET_TEAM, $theValue );		// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDATASET_OFFSET_TEAM,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetTeamOffset.
 
@@ -1729,7 +1793,10 @@ class SMARTLoader
 	public function HouseholdDatasetTeamOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_HOUSEHOLD_ID, self::kDATASET_OFFSET_TEAM, $theValue );		// ==>
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDATASET_OFFSET_TEAM,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetTeamOffset.
 
@@ -1757,7 +1824,10 @@ class SMARTLoader
 	public function ChildDatasetClusterOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_CHILD_ID, self::kDATASET_OFFSET_CLUSTER, $theValue );		// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDATASET_OFFSET_CLUSTER,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetClusterOffset.
 
@@ -1785,7 +1855,10 @@ class SMARTLoader
 	public function MotherDatasetClusterOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDATASET_OFFSET_CLUSTER, $theValue );		// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDATASET_OFFSET_CLUSTER,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetClusterOffset.
 
@@ -1813,7 +1886,10 @@ class SMARTLoader
 	public function HouseholdDatasetClusterOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_HOUSEHOLD_ID, self::kDATASET_OFFSET_CLUSTER, $theValue );	// ==>
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDATASET_OFFSET_CLUSTER,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetClusterOffset.
 
@@ -1841,7 +1917,10 @@ class SMARTLoader
 	public function ChildDatasetIdentifierOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_CHILD_ID, self::kDATASET_OFFSET_IDENTIFIER, $theValue );	// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDATASET_OFFSET_IDENTIFIER,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetIdentifierOffset.
 
@@ -1869,7 +1948,10 @@ class SMARTLoader
 	public function MotherDatasetIdentifierOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDATASET_OFFSET_IDENTIFIER, $theValue );	// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDATASET_OFFSET_IDENTIFIER,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetIdentifierOffset.
 
@@ -1899,7 +1981,8 @@ class SMARTLoader
 		return $this->datasetOffset(
 			self::kDDICT_HOUSEHOLD_ID,
 			self::kDATASET_OFFSET_IDENTIFIER,
-			$theValue );															// ==>
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetIdentifierOffset.
 
@@ -1927,7 +2010,10 @@ class SMARTLoader
 	public function ChildDatasetHouseholdOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_CHILD_ID, self::kDATASET_OFFSET_HOUSEHOLD, $theValue );	// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDATASET_OFFSET_HOUSEHOLD,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetHouseholdOffset.
 
@@ -1955,7 +2041,10 @@ class SMARTLoader
 	public function MotherDatasetHouseholdOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDATASET_OFFSET_HOUSEHOLD, $theValue );	// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDATASET_OFFSET_HOUSEHOLD,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetHouseholdOffset.
 
@@ -1983,7 +2072,10 @@ class SMARTLoader
 	public function ChildDatasetMotherOffset( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_CHILD_ID, self::kDATASET_OFFSET_MOTHER, $theValue );		// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDATASET_OFFSET_MOTHER,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetMotherOffset.
 
@@ -2015,7 +2107,10 @@ class SMARTLoader
 	public function ChildDatasetHeaderCoumns( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_CHILD_ID, self::kDDICT_COLUMNS, $theValue );				// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDDICT_COLUMNS,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetHeaderCoumns.
 
@@ -2046,8 +2141,11 @@ class SMARTLoader
 	 */
 	public function MotherDatasetHeaderCoumns( $theValue = NULL )
 	{
-		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDDICT_COLUMNS, $theValue );				// ==>
+		return $this->dictionaryList(
+			self::kDDICT_MOTHER_ID,
+			self::kDDICT_COLUMNS,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetHeaderCoumns.
 
@@ -2078,8 +2176,11 @@ class SMARTLoader
 	 */
 	public function HouseholdDatasetHeaderCoumns( $theValue = NULL )
 	{
-		return $this->datasetOffset(
-			self::kDDICT_HOUSEHOLD_ID, self::kDDICT_COLUMNS, $theValue );			// ==>
+		return $this->dictionaryList(
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDDICT_COLUMNS,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetHeaderCoumns.
 
@@ -2110,7 +2211,10 @@ class SMARTLoader
 	public function ChildDatasetDuplicateHeaderCoumns( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_CHILD_ID, self::kDDICT_COLUMN_DUPS, $theValue );			// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDDICT_COLUMN_DUPS,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetDuplicateHeaderCoumns.
 
@@ -2142,7 +2246,10 @@ class SMARTLoader
 	public function MotherDatasetDuplicateHeaderCoumns( $theValue = NULL )
 	{
 		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDDICT_COLUMN_DUPS, $theValue );			// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDDICT_COLUMN_DUPS,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetDuplicateHeaderCoumns.
 
@@ -2173,8 +2280,11 @@ class SMARTLoader
 	 */
 	public function HouseholdDatasetDuplicateHeaderCoumns( $theValue = NULL )
 	{
-		return $this->datasetOffset(
-			self::kDDICT_HOUSEHOLD_ID, self::kDDICT_COLUMN_DUPS, $theValue );		// ==>
+		return $this->dictionaryList(
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDDICT_COLUMN_DUPS,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetDuplicateHeaderCoumns.
 
@@ -2205,7 +2315,10 @@ class SMARTLoader
 	public function ChildDatasetFields( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_CHILD_ID, self::kDDICT_FIELDS, $theValue );				// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDDICT_FIELDS,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetFields.
 
@@ -2235,8 +2348,11 @@ class SMARTLoader
 	 */
 	public function MotherDatasetFields( $theValue = NULL )
 	{
-		return $this->datasetOffset(
-			self::kDDICT_MOTHER_ID, self::kDDICT_FIELDS, $theValue );				// ==>
+		return $this->dictionaryList(
+			self::kDDICT_MOTHER_ID,
+			self::kDDICT_FIELDS,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetFields.
 
@@ -2266,8 +2382,11 @@ class SMARTLoader
 	 */
 	public function HouseholdDatasetFields( $theValue = NULL )
 	{
-		return $this->datasetOffset(
-			self::kDDICT_HOUSEHOLD_ID, self::kDDICT_FIELDS, $theValue );			// ==>
+		return $this->dictionaryList(
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDDICT_FIELDS,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetFields.
 
@@ -2283,6 +2402,8 @@ class SMARTLoader
 	 * the method will iterate the original collection and load all data into the final
 	 * collection; if the original collection have not yet been loaded, the method will
 	 * raise an exception.
+	 *
+	 * @uses loadDatasetData()
 	 */
 	public function LoadChildDatasetData()
 	{
@@ -2302,6 +2423,8 @@ class SMARTLoader
 	 * the method will iterate the original collection and load all data into the final
 	 * collection; if the original collection have not yet been loaded, the method will
 	 * raise an exception.
+	 *
+	 * @uses loadDatasetData()
 	 */
 	public function LoadMotherDatasetData()
 	{
@@ -2321,6 +2444,8 @@ class SMARTLoader
 	 * the method will iterate the original collection and load all data into the final
 	 * collection; if the original collection have not yet been loaded, the method will
 	 * raise an exception.
+	 *
+	 * @uses loadDatasetData()
 	 */
 	public function LoadHouseholdDatasetData()
 	{
@@ -2352,7 +2477,10 @@ class SMARTLoader
 	public function ChildDatasetDuplicateEntries( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_CHILD_ID, self::kDDICT_ENTRY_DUPS, $theValue );			// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDDICT_ENTRY_DUPS,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetDuplicateEntries.
 
@@ -2380,7 +2508,10 @@ class SMARTLoader
 	public function MotherDatasetDuplicateEntries( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_MOTHER_ID, self::kDDICT_ENTRY_DUPS, $theValue );			// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDDICT_ENTRY_DUPS,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetDuplicateEntries.
 
@@ -2408,7 +2539,10 @@ class SMARTLoader
 	public function HouseholdDatasetDuplicateEntries( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_HOUSEHOLD_ID, self::kDDICT_ENTRY_DUPS, $theValue );		// ==>
+			self::kDDICT_HOUSEHOLD_ID,
+			self::kDDICT_ENTRY_DUPS,
+			$theValue
+		);																			// ==>
 
 	} // HouseholdDatasetDuplicateEntries.
 
@@ -2439,7 +2573,10 @@ class SMARTLoader
 	public function ChildDatasetInvalidMothers( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_CHILD_ID, self::kDDICT_INVALID_MOTHERS, $theValue );		// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDDICT_INVALID_MOTHERS,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetInvalidMothers.
 
@@ -2470,7 +2607,10 @@ class SMARTLoader
 	public function ChildDatasetInvalidHouseholds( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_CHILD_ID, self::kDDICT_INVALID_HOUSEHOLDS, $theValue );	// ==>
+			self::kDDICT_CHILD_ID,
+			self::kDDICT_INVALID_HOUSEHOLDS,
+			$theValue
+		);																			// ==>
 
 	} // ChildDatasetInvalidHouseholds.
 
@@ -2501,7 +2641,10 @@ class SMARTLoader
 	public function MotherDatasetInvalidHouseholds( $theValue = NULL )
 	{
 		return $this->dictionaryList(
-			self::kDDICT_MOTHER_ID, self::kDDICT_INVALID_HOUSEHOLDS, $theValue );	// ==>
+			self::kDDICT_MOTHER_ID,
+			self::kDDICT_INVALID_HOUSEHOLDS,
+			$theValue
+		);																			// ==>
 
 	} // MotherDatasetInvalidHouseholds.
 
@@ -2691,6 +2834,8 @@ class SMARTLoader
 	 * exception if the file was not declared.
 	 *
 	 * @return string				Status code.
+	 *
+	 * @uses loadDataset()
 	 */
 	public function LoadChildDataset()
 	{
@@ -2715,6 +2860,8 @@ class SMARTLoader
 	 * exception if the file was not declared.
 	 *
 	 * @return string				Status code.
+	 *
+	 * @uses loadDataset()
 	 */
 	public function LoadMotherDataset()
 	{
@@ -2739,6 +2886,8 @@ class SMARTLoader
 	 * exception if the file was not declared.
 	 *
 	 * @return string				Status code.
+	 *
+	 * @uses loadDataset()
 	 */
 	public function LoadHouseholdDataset()
 	{
@@ -2769,6 +2918,8 @@ class SMARTLoader
 	 * code; if there are no errors, the method will return the current status code.
 	 *
 	 * @return string				Status code.
+	 *
+	 * @uses loadDatasetHeader()
 	 */
 	public function LoadChildDatasetHeader()
 	{
@@ -2790,6 +2941,8 @@ class SMARTLoader
 	 * code; if there are no errors, the method will return the current status code.
 	 *
 	 * @return string				Status code.
+	 *
+	 * @uses loadDatasetHeader()
 	 */
 	public function LoadMotherDatasetHeader()
 	{
@@ -2811,6 +2964,8 @@ class SMARTLoader
 	 * status code; if there are no errors, the method will return the current status code.
 	 *
 	 * @return string				Status code.
+	 *
+	 * @uses loadDatasetHeader()
 	 */
 	public function LoadHouseholdDatasetHeader()
 	{
@@ -2829,6 +2984,8 @@ class SMARTLoader
 	 * This method can be used to load the child dataset fields into the data dictionary,
 	 * the method will process the dataset columns and determine the data type of each
 	 * column; if the columns have not yet been loaded, the method will raise an exception.
+	 *
+	 * @uses loadDatasetFields()
 	 */
 	public function LoadChildDatasetFields()
 	{
@@ -2847,6 +3004,8 @@ class SMARTLoader
 	 * This method can be used to load the mother dataset fields into the data dictionary,
 	 * the method will process the dataset columns and determine the data type of each
 	 * column; if the columns have not yet been loaded, the method will raise an exception.
+	 *
+	 * @uses loadDatasetFields()
 	 */
 	public function LoadMotherDatasetFields()
 	{
@@ -2865,6 +3024,8 @@ class SMARTLoader
 	 * This method can be used to load the household dataset fields into the data
 	 * the method will process the dataset columns and determine the data type of each
 	 * column; if the columns have not yet been loaded, the method will raise an exception.
+	 *
+	 * @uses loadDatasetFields()
 	 */
 	public function LoadHouseholdDatasetFields()
 	{
@@ -2901,6 +3062,8 @@ class SMARTLoader
 	 * groups identifier.
 	 *
 	 * @return int					Status code.
+	 *
+	 * @uses checkDatasetDuplicateEntries()
 	 */
 	public function CheckChildDatasetDuplicates()
 	{
@@ -2937,6 +3100,8 @@ class SMARTLoader
 	 * groups identifier.
 	 *
 	 * @return int					Status code.
+	 *
+	 * @uses checkDatasetDuplicateEntries()
 	 */
 	public function CheckMotherDatasetDuplicates()
 	{
@@ -2973,6 +3138,8 @@ class SMARTLoader
 	 * groups identifier.
 	 *
 	 * @return int					Status code.
+	 *
+	 * @uses checkDatasetDuplicateEntries()
 	 */
 	public function CheckHouseholdDatasetDuplicates()
 	{
@@ -3099,6 +3266,9 @@ class SMARTLoader
 	 * The method will raise an exception if the child or mother datasets are missing.
 	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses datasetCollection()
+	 * @uses datasetStatus()
 	 */
 	public function SetChildCount()
 	{
@@ -3127,6 +3297,15 @@ class SMARTLoader
 										=> $document[ '_id' ]
 									] ) ] ]
 						);
+
+				//
+				// Set status.
+				//
+				$this->datasetStatus(
+					self::kDDICT_MOTHER_ID,
+					TRUE,
+					self::kSTATUS_LOADED_STATS
+				);
 
 			} // Has child collection.
 
@@ -3165,6 +3344,9 @@ class SMARTLoader
 	 * The method will raise an exception if the child or mother datasets are missing.
 	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses datasetCollection()
+	 * @uses datasetStatus()
 	 */
 	public function SetMotherCount()
 	{
@@ -3193,6 +3375,15 @@ class SMARTLoader
 										=> $document[ '_id' ]
 									] ) ] ]
 						);
+
+				//
+				// Set status.
+				//
+				$this->datasetStatus(
+					self::kDDICT_HOUSEHOLD_ID,
+					TRUE,
+					self::kSTATUS_LOADED_STATS
+				);
 
 			} // Has mother collection.
 
@@ -3235,6 +3426,21 @@ class SMARTLoader
 	 * dataset. The method expects all tests to have passed, or an exception will be raised.
 	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses ChildDatasetStatus()
+	 * @uses MotherDatasetStatus()
+	 * @uses HouseholdDatasetStatus()
+	 * @uses datasetCollection()
+	 * @uses getChildFields()
+	 * @uses getMotherFields()
+	 * @uses getHouseholdFields()
+	 * @uses ChildDatasetDateOffset()
+	 * @uses ChildDatasetLocationOffset()
+	 * @uses ChildDatasetTeamOffset()
+	 * @uses ChildDatasetClusterOffset()
+	 * @uses ChildDatasetHouseholdOffset()
+	 * @uses ChildDatasetMotherOffset()
+	 * @uses ChildDatasetIdentifierOffset()
 	 */
 	public function MergeSurvey()
 	{
@@ -3414,6 +3620,21 @@ class SMARTLoader
 
 					} // Iterating children.
 
+					//
+					// Set status.
+					//
+					$datasets = [
+						self::kDDICT_CHILD_ID,
+						self::kDDICT_MOTHER_ID,
+						self::kDDICT_HOUSEHOLD_ID
+					];
+					foreach( $datasets as $dataset )
+						$this->datasetStatus(
+							$dataset,
+							NULL,
+							self::kSTATUS_VALID
+						);
+
 				} // Has households.
 
 				else
@@ -3436,6 +3657,249 @@ class SMARTLoader
 				"empty children dataset." );									// !@! ==>
 
 	} // MergeSurvey.
+
+
+	/*===================================================================================
+	 *	ExportSurvey																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Export survey.</h4>
+	 *
+	 * This method can be used to export the survey as an Excel file, it expects two
+	 * parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$thePath</b>: Export file path.
+	 * 	<li><b>$theDataset</b>: Dataset selector; being a bitfield you may provide more than
+	 * 		one choice, each dataset will be stored in its own worksheet:
+	 *	 <ul>
+	 *	 	<li><tt>{@link self::kDATASET_SELECTOR_CHILD}</tt>: Child dataset.
+	 *	 	<li><tt>{@link self::kDATASET_SELECTOR_MOTHER}</tt>: Mother dataset.
+	 *	 	<li><tt>{@link self::kDATASET_SELECTOR_HOUSEHOLD}</tt>: Household dataset.
+	 *	 	<li><tt>{@link self::kDATASET_SELECTOR_MERGED}</tt>: Merged dataset.
+	 *	 </ul>
+	 * </ul>
+	 *
+	 * The method will consider datasets only if they have the {@link kSTATUS_VALID} status,
+	 * the merged dataset will be considered only if it is not empty.
+	 *
+	 * @param string				$thePath			File path.
+	 * @param int					$theDataset			Dataset selector.
+	 * @throws RuntimeException
+	 *
+	 * @uses ChildDatasetStatus()
+	 * @uses MotherDatasetStatus()
+	 * @uses HouseholdDatasetStatus()
+	 * @uses exportDataset()
+	 * @uses exportMerged()
+	 */
+	public function ExportSurvey( string $thePath, int $theDataset )
+	{
+		//
+		// Init local storage.
+		//
+		$worksheet_index = 0;
+
+		//
+		// Cache cells.
+		//
+		$cache_method = PHPExcel_CachedObjectStorageFactory::cache_in_memory_gzip;
+		if ( ! PHPExcel_Settings::setCacheStorageMethod( $cache_method ) )
+			throw new RuntimeException(
+				"Cannot export file: " .
+				"cache method [$cache_method] not available." );				// !@! ==>
+		
+		//
+		// Create Excel object.
+		//
+		$excel = new PHPExcel();
+
+		//
+		// Delete default worksheet.
+		//
+		$excel->removeSheetByIndex( 0 );
+
+		//
+		// Handle household dataset.
+		//
+		if( $theDataset & self::kDATASET_SELECTOR_HOUSEHOLD )
+		{
+			//
+			// Check dataset status.
+			//
+			if( $this->HouseholdDatasetStatus() == self::kSTATUS_VALID )
+			{
+				//
+				// Create household worksheet.
+				//
+				$worksheet = new PHPExcel_Worksheet( $excel, 'Households' );
+				$excel->addSheet( $worksheet, $worksheet_index++ );
+
+				//
+				// Export to worksheet.
+				//
+				$this->exportDataset( $worksheet, self::kDDICT_HOUSEHOLD_ID );
+
+			} // Valid status.
+
+		} // Requested household dataset.
+
+		//
+		// Handle mother dataset.
+		//
+		if( $theDataset & self::kDATASET_SELECTOR_MOTHER )
+		{
+			//
+			// Check dataset status.
+			//
+			if( $this->MotherDatasetStatus() == self::kSTATUS_VALID )
+			{
+				//
+				// Create mother worksheet.
+				//
+				$worksheet = new PHPExcel_Worksheet( $excel, 'Mothers' );
+				$excel->addSheet( $worksheet, $worksheet_index++ );
+
+				//
+				// Export to worksheet.
+				//
+				$this->exportDataset( $worksheet, self::kDDICT_MOTHER_ID );
+
+			} // Valid status.
+
+		} // Requested mother dataset.
+
+		//
+		// Handle child dataset.
+		//
+		if( $theDataset & self::kDATASET_SELECTOR_CHILD )
+		{
+			//
+			// Check dataset status.
+			//
+			if( $this->ChildDatasetStatus() == self::kSTATUS_VALID )
+			{
+				//
+				// Create child worksheet.
+				//
+				$worksheet = new PHPExcel_Worksheet( $excel, 'Children' );
+				$excel->addSheet( $worksheet, $worksheet_index++ );
+
+				//
+				// Export to worksheet.
+				//
+				$this->exportDataset( $worksheet, self::kDDICT_CHILD_ID );
+
+			} // Valid status.
+
+		} // Requested child dataset.
+
+		//
+		// Handle merged dataset.
+		//
+		if( $theDataset & self::kDATASET_SELECTOR_MERGED )
+		{
+			//
+			// Skip if empty.
+			//
+			if( $this->mSurvey->count() )
+			{
+				//
+				// Create merged worksheet.
+				//
+				$worksheet = new PHPExcel_Worksheet( $excel, 'Merged' );
+				$excel->addSheet( $worksheet, $worksheet_index++ );
+
+				//
+				// Export collection.
+				//
+				$this->exportMerged( $worksheet );
+
+			} // Dataset not empty.
+
+		} // Requested merged dataset.
+
+		//
+		// Write file.
+		//
+		$writer = PHPExcel_IOFactory::createWriter( $excel, 'Excel2007' );
+		$writer->save( $thePath );
+
+	} // ExportSurvey.
+
+
+
+/*=======================================================================================
+ *																						*
+ *									STATIC UTILITIES									*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	Excel2Date																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Convert an Excel date to string.</h4>
+	 *
+	 * This method will convert the provided integer into a string date. The method expects
+	 * an integer value corresponding to an Excel date and will return the date in
+	 * <tt>YYYY-MM-DD</tt> string format.
+	 *
+	 * @param int					$theDate			Date in Excel format.
+	 * @return string				String date in <tt>YYYY-MM-DD</tt> format.
+	 */
+	static function Excel2Date( int $theDate )
+	{
+		//
+		// Init base date.
+		//
+		$tmp1 = new DateTime( '1900-01-01' );
+
+		//
+		// Add interval.
+		//
+		$tmp2 = new DateInterval( 'P' . $theDate . 'D' );
+		$tmp1->add( $tmp2 );
+
+		return $tmp1->format( 'Y-m-d' );											// ==>
+
+	} // Excel2Date.
+
+
+	/*===================================================================================
+	 *	Date2Excel																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Convert a string date to an Excel date.</h4>
+	 *
+	 * This method will convert the provided string date into an Excel date. The method
+	 * expects a date as a string in <tt>YYYY-MM-DD</tt> format and will return an integer
+	 * corresponding to the Excel date.
+	 *
+	 * @param string				$theDate			Date in <tt>YYYY-MM-DD</tt> format.
+	 * @return int					Date in Excel format.
+	 */
+	static function Date2Excel( string $theDate )
+	{
+		//
+		// Init dates.
+		//
+		$tmp1 = new DateTime( '1900-01-01' );
+		$tmp2 = new DateTime( $theDate );
+
+		//
+		// Get interval.
+		//
+		$interval = $tmp1->diff( $tmp2 );
+
+		return (int)$interval->format( '%d' );										// ==>
+
+	} // Date2Excel.
 
 
 
@@ -3544,7 +4008,6 @@ class SMARTLoader
 	 * @param mixed					$theOperation		Bitfield operation.
 	 * @param string				$theValue			Dataset variable name.
 	 * @return int					Current status.
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function datasetStatus( string $theDataset,
@@ -3631,7 +4094,6 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @return Collection			Dataset final collection.
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function datasetCollection( string $theDataset )
@@ -3689,7 +4151,6 @@ class SMARTLoader
 	 * @param string				$theDataset			Dataset identifier.
 	 * @param string				$theValue			Dataset file path or operation.
 	 * @return string				Dataset file path.
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function datasetPath( string $theDataset, $theValue = NULL )
@@ -3789,7 +4250,6 @@ class SMARTLoader
 	 * @param string				$theDataset			Dataset identifier.
 	 * @param int					$theValue			Dataset header line or operation.
 	 * @return int					Dataset header line number.
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function datasetHeaderRow( string $theDataset, $theValue = NULL )
@@ -3839,15 +4299,15 @@ class SMARTLoader
 			// Set dictionary entry.
 			//
 			$this->mDDICTInfo
-			[ $theDataset ]
-			[ self::kDATASET_OFFSET_HEADER ] = (int)$theValue;
+				[ $theDataset ]
+				[ self::kDATASET_OFFSET_HEADER ] = (int)$theValue;
 
 		} // Set new value.
 
 		return
 			$this->mDDICTInfo
-			[ $theDataset ]
-			[ self::kDATASET_OFFSET_HEADER ];									// ==>
+				[ $theDataset ]
+				[ self::kDATASET_OFFSET_HEADER ];									// ==>
 
 	} // datasetHeaderRow.
 
@@ -3883,7 +4343,6 @@ class SMARTLoader
 	 * @param string				$theDataset			Dataset identifier.
 	 * @param int					$theValue			Dataset data line or operation.
 	 * @return int					Dataset header line number.
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function datasetDataRow( string $theDataset, $theValue = NULL )
@@ -3933,15 +4392,15 @@ class SMARTLoader
 			// Set dictionary entry.
 			//
 			$this->mDDICTInfo
-			[ $theDataset ]
-			[ self::kDATASET_OFFSET_DATA ] = (int)$theValue;
+				[ $theDataset ]
+				[ self::kDATASET_OFFSET_DATA ] = (int)$theValue;
 
 		} // Set new value.
 
 		return
 			$this->mDDICTInfo
-			[ $theDataset ]
-			[ self::kDATASET_OFFSET_DATA ];									// ==>
+				[ $theDataset ]
+				[ self::kDATASET_OFFSET_DATA ];										// ==>
 
 	} // datasetDataRow.
 
@@ -3977,7 +4436,7 @@ class SMARTLoader
 	 * 	<li><b>$theValue</b>: Offset or operation:
 	 * 	 <ul>
 	 * 		<li><tt>NULL<tt>: Return current value.
-	 * 		<li><i>int<i>: New offset.
+	 * 		<li><i>string<i>: New offset.
 	 * 	 </ul>
 	 * </ul>
 	 *
@@ -3987,14 +4446,13 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @param string				$theOffset			Dictionary offset.
-	 * @param string				$theValue			Dataset variable name.
+	 * @param string				$theValue			Value or operation.
 	 * @return string				Current value.
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function datasetOffset( string $theDataset,
 									  string $theOffset,
-									  $theValue = NULL )
+									  string $theValue = NULL )
 	{
 		//
 		// Check dataset selector.
@@ -4058,7 +4516,7 @@ class SMARTLoader
 	 * 		<li><tt>{@link kDDICT_COLUMNS}<tt>: Dataset header columns list.
 	 * 		<li><tt>{@link kDDICT_FIELDS}<tt>: Data dictionary fields list.
 	 * 	 </ul>
-	 * 	<li><b>$theValue</b>: Offset or operation:
+	 * 	<li><b>$theValue</b>: Value or operation:
 	 * 	 <ul>
 	 * 		<li><tt>NULL<tt>: Return current value.
 	 * 		<li><i>array<i>: New value.
@@ -4071,14 +4529,13 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @param string				$theOffset			Dictionary offset.
-	 * @param string				$theValue			Dataset variable name.
+	 * @param array					$theValue			Value or operation.
 	 * @return array				Current value.
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	protected function dictionaryList( string $theDataset,
 									   string $theOffset,
-									   		  $theValue = NULL )
+									    array $theValue = NULL )
 	{
 		//
 		// Check dataset selector.
@@ -4162,8 +4619,12 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @return int					Status code ({@link kSTATUS_LOADED}).
-	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses datasetPath()
+	 * @uses originalCollection()
+	 * @uses dictionaryList()
+	 * @uses datasetStatus()
 	 */
 	protected function loadDataset( string $theDataset )
 	{
@@ -4185,9 +4646,9 @@ class SMARTLoader
 			$worksheet =
 				PHPExcel_IOFactory::createReader(
 					PHPExcel_IOFactory::identify( $path ) )
-					->setReadDataOnly( TRUE )
-					->load( $path )
-					->getActiveSheet();
+						->setReadDataOnly( TRUE )
+						->load( $path )
+						->getActiveSheet();
 
 			//
 			// Reset data dictionary.
@@ -4275,8 +4736,12 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @return int					Status code ({@link kSTATUS_LOADED}).
-	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses datasetHeaderRow()
+	 * @uses originalCollection()
+	 * @uses dictionaryList()
+	 * @uses datasetStatus()
 	 */
 	protected function loadDatasetHeader( string $theDataset )
 	{
@@ -4420,8 +4885,12 @@ class SMARTLoader
 	 * the {@link kDDICT_FIELDS} element of the data dictionary.
 	 *
 	 * @param string				$theDataset			Dataset identifier.
-	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses datasetDataRow()
+	 * @uses originalCollection()
+	 * @uses dictionaryList()
+	 * @uses datasetOffset()
 	 */
 	protected function loadDatasetFields( string $theDataset )
 	{
@@ -4596,8 +5065,12 @@ class SMARTLoader
 	 * The method will raise an exception if the the original collection was not yet loaded.
 	 *
 	 * @param string				$theDataset			Dataset identifier.
-	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses originalCollection()
+	 * @uses dictionaryList()
+	 * @uses datasetDataRow()
+	 * @uses datasetCollection()
 	 */
 	protected function loadDatasetData( string $theDataset )
 	{
@@ -4687,12 +5160,8 @@ class SMARTLoader
 									case self::kTYPE_DATE:
 										if( $dict[ self::kFIELD_KIND ]
 											== self::kTYPE_INTEGER )
-										{
-											$tmp1 = new DateTime( '1900-01-01' );
-											$tmp2 = new DateInterval( 'P' . $value . 'D' );
-											$tmp1->add( $tmp2 );
-											$document[ $field ] = $tmp1->format( 'Y-m-d' );
-										}
+											$document[ $field ]
+												= self::Excel2Date( $value );
 										else
 											$document[ $field ] = (string)$value;
 										break;
@@ -4783,8 +5252,12 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @return int					Status code.
-	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses dictionaryList()
+	 * @uses datasetCollection()
+	 * @uses datasetOffset()
+	 * @uses datasetStatus()
 	 */
 	protected function checkDatasetDuplicateEntries( string $theDataset )
 	{
@@ -5073,8 +5546,12 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @return int					Status code.
-	 *
 	 * @throws RuntimeException
+	 *
+	 * @uses dictionaryList()
+	 * @uses datasetCollection()
+	 * @uses datasetOffset()
+	 * @uses datasetStatus()
 	 */
 	protected function checkDatasetInvalidMothers( string $theDataset = self::kDDICT_CHILD_ID )
 	{
@@ -5423,9 +5900,14 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @return int					Status code.
-	 *
 	 * @throws RuntimeException
 	 * @throws InvalidArgumentException
+	 *
+	 * @uses dictionaryList()
+	 * @uses datasetCollection()
+	 * @uses datasetOffset()
+	 * @uses dictionaryList()
+	 * @uses datasetStatus()
 	 */
 	protected function checkDatasetInvalidHouseholds( string $theDataset )
 	{
@@ -5763,6 +6245,8 @@ class SMARTLoader
 	 * @param mixed					$theValue			New value, or operation.
 	 * @return Collection
 	 * @throws InvalidArgumentException
+	 *
+	 * @uses Database()
 	 */
 	protected function manageCollection( &$theMember, $theValue = NULL )
 	{
@@ -5815,8 +6299,9 @@ class SMARTLoader
 	 *
 	 * @param string				$theDataset			Dataset identifier.
 	 * @return Collection			Original collection.
-	 *
 	 * @throws InvalidArgumentException
+	 *
+	 * @uses Database()
 	 */
 	protected function originalCollection( string $theDataset )
 	{
@@ -5856,6 +6341,362 @@ class SMARTLoader
 
 /*=======================================================================================
  *																						*
+ *								PROTECTED EXPORT UTILITIES								*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	exportDataset																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Export a collection.</h4>
+	 *
+	 * This method can be used by the public interface to fill the provided Excel worksheet
+	 * with data from a dataset collection.
+	 *
+	 * The method expects the Excel worksheet and the dataset selector as
+	 * {@link kDDICT_CHILD_ID} for the child, {@link kDDICT_MOTHER_ID} for the mother, or
+	 * {@link kDDICT_HOUSEHOLD_ID} for the household dataset; if the selector is not among
+	 * these values, the method will raise an exception.
+	 *
+	 * If the collection is missing or empty, the method will do nothing.
+	 *
+	 * The method will return the number of written rows.
+	 *
+	 * @param PHPExcel_Worksheet	$theWorksheet		Export worksheet.
+	 * @param string				$theDataset			Dataset selector.
+	 * @return int					Number of written rows.
+	 * @throws InvalidArgumentException
+	 *
+	 * @uses datasetCollection()
+	 * @uses dictionaryList()
+	 */
+	protected function exportDataset( PHPExcel_Worksheet $theWorksheet, string $theDataset )
+	{
+		//
+		// Check dataset selector.
+		//
+		switch( $theDataset )
+		{
+			case self::kDDICT_CHILD_ID:
+			case self::kDDICT_MOTHER_ID:
+			case self::kDDICT_HOUSEHOLD_ID:
+				break;
+
+			default:
+				throw new InvalidArgumentException(
+					"Invalid dataset selector [$theDataset]." );				// !@! ==>
+		}
+
+		//
+		// Check dataset.
+		//
+		if( $this->datasetCollection( $theDataset )->count() )
+		{
+			//
+			// Init local storage.
+			//
+			$row = 1;
+
+			//
+			// Set ID field header.
+			//
+			$theWorksheet->setCellValueByColumnAndRow( 0, $row, '_id' );
+
+			//
+			// Add header.
+			//
+			$header = $this->dictionaryList( $theDataset, self::kDDICT_FIELDS );
+			$fields = array_keys( $header );
+			$columns = array_keys( $fields );
+			foreach( $columns as $column )
+				$theWorksheet->setCellValueByColumnAndRow(
+					$column + 1, $row, $fields[ $column ]
+				);
+
+			//
+			// Iterate data.
+			//
+			$cursor = $this->datasetCollection( $theDataset )->find();
+			foreach( $cursor as $document )
+			{
+				//
+				// Init local storage.
+				//
+				$row++;
+				$document = $document->getArrayCopy();
+
+				//
+				// Set unit identifier.
+				//
+				$theWorksheet->setCellValueByColumnAndRow( 0, $row, $document[ '_id' ] );
+
+				//
+				// Iterate fields.
+				//
+				foreach( $columns as $column )
+				{
+					//
+					// Get value.
+					//
+					if( array_key_exists( $fields[ $column ], $document ) )
+					{
+						//
+						// Get value.
+						//
+						$value = $document[ $fields[ $column ] ];
+
+						//
+						// Get cell.
+						//
+						$cell = $theWorksheet->getCellByColumnAndRow( $column + 1, $row );
+
+						//
+						// Parse by type.
+						//
+						switch( $header[ $fields[ $column ] ][ self::kFIELD_TYPE ] )
+						{
+							case self::kTYPE_STRING:
+								$cell->setValueExplicit(
+									$value, PHPExcel_Cell_DataType::TYPE_STRING
+								);
+								break;
+
+							case self::kTYPE_INTEGER:
+							case self::kTYPE_NUMBER:
+							case self::kTYPE_DOUBLE:
+								$cell->setValueExplicit(
+									$value, PHPExcel_Cell_DataType::TYPE_NUMERIC
+								);
+								break;
+
+							case self::kTYPE_DATE:
+								$date = new DateTime( $value );
+								$stamp = $date->getTimestamp();
+								$date_value = PHPExcel_Shared_Date::PHPToExcel( $stamp );
+								$cell->setValue( $date_value );
+								$cell
+									->getStyle()
+									->getNumberFormat()
+									->setFormatCode(
+										PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDD2
+									);
+								break;
+
+							default:
+								$cell->setValue( $value );
+								break;
+
+						} // Parsing data type.
+
+					} // Column has value.
+
+				} // Iterating columns.
+
+			} // Iterating dataset.
+
+			//
+			// Format worksheet.
+			//
+			foreach( $theWorksheet->getColumnIterator() as $column )
+				$theWorksheet
+					->getColumnDimension( $column->getColumnIndex() )
+					->setAutoSize( TRUE );
+
+		} // Dataset not empty.
+
+		return $row = 1;															// ==>
+
+	} // exportDataset.
+
+
+	/*===================================================================================
+	 *	exportMerged																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Export merged dataset.</h4>
+	 *
+	 * This method can be used by the public interface to fill the provided Excel worksheet
+	 * with data from the merged datasets collection.
+	 *
+	 * The method expects the Excel worksheet, if the collection is missing or empty, the
+	 * method will do nothing.
+	 *
+	 * The method will return the number of written rows.
+	 *
+	 * @param PHPExcel_Worksheet	$theWorksheet		Export worksheet.
+	 * @return int					Number of written rows.
+	 *
+	 * @uses getChildFields()
+	 * @uses getMotherFields()
+	 * @uses getHouseholdFields()
+	 * @uses ChildDatasetFields()
+	 * @uses MotherDatasetFields()
+	 * @uses HouseholdDatasetFields()
+	 */
+	protected function exportMerged( PHPExcel_Worksheet $theWorksheet )
+	{
+		//
+		// Handle merged dataset.
+		//
+		if( $this->mSurvey->count() )
+		{
+			//
+			// Init local storage.
+			//
+			$row = 1;
+
+			//
+			// Select default fields.
+			//
+			$child_fields = $this->getChildFields();
+			$mother_fields = $this->getMotherFields();
+			$household_fields = $this->getHouseholdFields();
+
+			//
+			// Set fields.
+			//
+			$header = [ '_id' => [ self::kFIELD_TYPE => self::kTYPE_INTEGER ] ];
+
+			//
+			// Set default group identifiers.
+			//
+			$header[ self::kCOLLECTION_OFFSET_DATE ]
+				= [ self::kFIELD_TYPE => self::kTYPE_DATE ];
+			$header[ self::kCOLLECTION_OFFSET_LOCATION ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+			$header[ self::kCOLLECTION_OFFSET_TEAM ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+			$header[ self::kCOLLECTION_OFFSET_CLUSTER ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+			$header[ self::kCOLLECTION_OFFSET_HOUSEHOLD ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+			$header[ self::kCOLLECTION_OFFSET_MOTHER ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+			$header[ self::kCOLLECTION_OFFSET_IDENTIFIER ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+
+			//
+			// Load child fields.
+			//
+			foreach( $child_fields as $field )
+				$header[ $field ] = $this->ChildDatasetFields()[ $field ];
+
+			//
+			// Set mother ID.
+			//
+			$header[ self::kCOLLECTION_OFFSET_MOTHER_ID ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+
+			//
+			// Load mother fields.
+			//
+			foreach( $mother_fields as $field )
+				$header[ $field ] = $this->MotherDatasetFields()[ $field ];
+
+			//
+			// Set household ID.
+			//
+			$header[ self::kCOLLECTION_OFFSET_HOUSEHOLD_ID ]
+				= [ self::kFIELD_TYPE => self::kTYPE_INTEGER ];
+
+			//
+			// Load household fields.
+			//
+			foreach( $household_fields as $field )
+				$header[ $field ] = $this->HouseholdDatasetFields()[ $field ];
+
+			//
+			// Add header.
+			//
+			$fields = array_keys( $header );
+			$columns = array_keys( $fields );
+			foreach( $columns as $column )
+				$theWorksheet->setCellValueByColumnAndRow(
+					$column, $row, $fields[ $column ]
+				);
+
+			//
+			// Iterate data.
+			//
+			$cursor = $this->mSurvey->find();
+			foreach( $cursor as $document )
+			{
+				//
+				// Init local storage.
+				//
+				$row++;
+				$document = $document->getArrayCopy();
+
+				//
+				// Iterate fields.
+				//
+				foreach( $columns as $column )
+				{
+					//
+					// Get value.
+					//
+					if( array_key_exists( $fields[ $column ], $document ) )
+					{
+						//
+						// Get value.
+						//
+						$value = $document[ $fields[ $column ] ];
+
+						//
+						// Parse by type.
+						//
+						switch( $header[ $fields[ $column ] ][ self::kFIELD_TYPE ] )
+						{
+							case self::kTYPE_DATE:
+								$date = new DateTime( $value );
+								$stamp = $date->getTimestamp();
+								$date_value = PHPExcel_Shared_Date::PHPToExcel( $stamp );
+								$theWorksheet->setCellValueByColumnAndRow(
+									$column, $row, $date_value );
+								$theWorksheet->getCellByColumnAndRow( $column, $row )
+									->getStyle()
+									->getNumberFormat()
+									->SetFormatCode(
+										PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDD2
+									);
+								break;
+
+							default:
+								$theWorksheet->setCellValueByColumnAndRow(
+									$column, $row, $value );
+								break;
+
+						} // Parsing data type.
+
+					} // Column has value.
+
+				} // Iterating columns.
+
+			} // Iterating dataset.
+
+			//
+			// Format worksheet.
+			//
+			foreach( $theWorksheet->getColumnIterator() as $column )
+				$theWorksheet
+					->getColumnDimension( $column->getColumnIndex() )
+					->setAutoSize( TRUE );
+
+		} // Has merged dataset.
+
+		return $row = 1;															// ==>
+
+	} // exportMerged.
+
+
+
+/*=======================================================================================
+ *																						*
  *									PROTECTED UTILITIES									*
  *																						*
  *======================================================================================*/
@@ -5875,6 +6716,15 @@ class SMARTLoader
 	 * The method assumes all required information is loaded into the object.
 	 *
 	 * @return array
+	 *
+	 * @uses ChildDatasetDateOffset()
+	 * @uses ChildDatasetLocationOffset()
+	 * @uses ChildDatasetTeamOffset()
+	 * @uses ChildDatasetClusterOffset()
+	 * @uses ChildDatasetHouseholdOffset()
+	 * @uses ChildDatasetMotherOffset()
+	 * @uses ChildDatasetIdentifierOffset()
+	 * @uses ChildDatasetFields()
 	 */
 	protected function getChildFields()
 	{
@@ -5915,6 +6765,14 @@ class SMARTLoader
 	 * The method assumes all required information is loaded into the object.
 	 *
 	 * @return array
+	 *
+	 * @uses MotherDatasetDateOffset()
+	 * @uses MotherDatasetLocationOffset()
+	 * @uses MotherDatasetTeamOffset()
+	 * @uses MotherDatasetClusterOffset()
+	 * @uses MotherDatasetHouseholdOffset()
+	 * @uses MotherDatasetIdentifierOffset()
+	 * @uses MotherDatasetFields()
 	 */
 	protected function getMotherFields()
 	{
@@ -5953,6 +6811,13 @@ class SMARTLoader
 	 * The method assumes all required information is loaded into the object.
 	 *
 	 * @return array
+	 *
+	 * @uses HouseholdDatasetDateOffset()
+	 * @uses HouseholdDatasetLocationOffset()
+	 * @uses HouseholdDatasetTeamOffset()
+	 * @uses HouseholdDatasetClusterOffset()
+	 * @uses HouseholdDatasetIdentifierOffset()
+	 * @uses HouseholdDatasetFields()
 	 */
 	protected function getHouseholdFields()
 	{
