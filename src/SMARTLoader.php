@@ -2392,69 +2392,6 @@ class SMARTLoader
 
 
 	/*===================================================================================
-	 *	LoadChildDatasetData															*
-	 *==================================================================================*/
-
-	/**
-	 * <h4>Load child dataset data.</h4>
-	 *
-	 * This method can be used to load the child dataset data into the final collection,
-	 * the method will iterate the original collection and load all data into the final
-	 * collection; if the original collection have not yet been loaded, the method will
-	 * raise an exception.
-	 *
-	 * @uses loadDatasetData()
-	 */
-	public function LoadChildDatasetData()
-	{
-		$this->loadDatasetData( self::kDDICT_CHILD_ID );							// ==>
-
-	} // LoadChildDatasetData.
-
-
-	/*===================================================================================
-	 *	LoadMotherDatasetData															*
-	 *==================================================================================*/
-
-	/**
-	 * <h4>Load mother dataset data.</h4>
-	 *
-	 * This method can be used to load the mother dataset data into the final collection,
-	 * the method will iterate the original collection and load all data into the final
-	 * collection; if the original collection have not yet been loaded, the method will
-	 * raise an exception.
-	 *
-	 * @uses loadDatasetData()
-	 */
-	public function LoadMotherDatasetData()
-	{
-		$this->loadDatasetData( self::kDDICT_MOTHER_ID );							// ==>
-
-	} // LoadMotherDatasetData.
-
-
-	/*===================================================================================
-	 *	LoadHouseholdDatasetData														*
-	 *==================================================================================*/
-
-	/**
-	 * <h4>Load household dataset data.</h4>
-	 *
-	 * This method can be used to load the household dataset data into the data
-	 * the method will iterate the original collection and load all data into the final
-	 * collection; if the original collection have not yet been loaded, the method will
-	 * raise an exception.
-	 *
-	 * @uses loadDatasetData()
-	 */
-	public function LoadHouseholdDatasetData()
-	{
-		$this->loadDatasetData( self::kDDICT_HOUSEHOLD_ID );						// ==>
-
-	} // LoadHouseholdDatasetData.
-
-
-	/*===================================================================================
 	 *	ChildDatasetDuplicateEntries													*
 	 *==================================================================================*/
 
@@ -3032,6 +2969,69 @@ class SMARTLoader
 		$this->loadDatasetFields( self::kDDICT_HOUSEHOLD_ID );						// ==>
 
 	} // LoadHouseholdDatasetFields.
+
+
+	/*===================================================================================
+	 *	LoadChildDatasetData															*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Load child dataset data.</h4>
+	 *
+	 * This method can be used to load the child dataset data into the final collection,
+	 * the method will iterate the original collection and load all data into the final
+	 * collection; if the original collection have not yet been loaded, the method will
+	 * raise an exception.
+	 *
+	 * @uses loadDatasetData()
+	 */
+	public function LoadChildDatasetData()
+	{
+		$this->loadDatasetData( self::kDDICT_CHILD_ID );							// ==>
+
+	} // LoadChildDatasetData.
+
+
+	/*===================================================================================
+	 *	LoadMotherDatasetData															*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Load mother dataset data.</h4>
+	 *
+	 * This method can be used to load the mother dataset data into the final collection,
+	 * the method will iterate the original collection and load all data into the final
+	 * collection; if the original collection have not yet been loaded, the method will
+	 * raise an exception.
+	 *
+	 * @uses loadDatasetData()
+	 */
+	public function LoadMotherDatasetData()
+	{
+		$this->loadDatasetData( self::kDDICT_MOTHER_ID );							// ==>
+
+	} // LoadMotherDatasetData.
+
+
+	/*===================================================================================
+	 *	LoadHouseholdDatasetData														*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Load household dataset data.</h4>
+	 *
+	 * This method can be used to load the household dataset data into the data
+	 * the method will iterate the original collection and load all data into the final
+	 * collection; if the original collection have not yet been loaded, the method will
+	 * raise an exception.
+	 *
+	 * @uses loadDatasetData()
+	 */
+	public function LoadHouseholdDatasetData()
+	{
+		$this->loadDatasetData( self::kDDICT_HOUSEHOLD_ID );						// ==>
+
+	} // LoadHouseholdDatasetData.
 
 
 	/*===================================================================================
@@ -6697,6 +6697,78 @@ class SMARTLoader
 
 /*=======================================================================================
  *																						*
+ *							PROTECTED STATISTICAL UTILITIES								*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	tableClusterByTeam																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Get cluster x team table.</h4>
+	 *
+	 * This method can be used to retrieve a table providing the list of clusters with the
+	 * number of entries for each team.
+	 *
+	 * The method expects a single parameter representing the dataset selector as
+	 * {@link kDDICT_CHILD_ID} for the child, {@link kDDICT_MOTHER_ID} for the mother, or
+	 * {@link kDDICT_HOUSEHOLD_ID} for the household dataset; if the selector is not among
+	 * these values, the method will raise an exception.
+	 *
+	 * The method will return an array of documents having as identifier the cluster
+	 * number and as other fields the list of team numbers with the relative match count.
+	 *
+	 * @param string				$theDataset			Dataset selector.
+	 * @return array
+	 * @throws InvalidArgumentException
+	 *
+	 * @uses datasetCollection()
+	 * @uses dictionaryList()
+	 */
+	protected function tableClusterByTeam( string $theDataset )
+	{
+		//
+		// Check dataset selector.
+		//
+		switch( $theDataset )
+		{
+			case self::kDDICT_CHILD_ID:
+			case self::kDDICT_MOTHER_ID:
+			case self::kDDICT_HOUSEHOLD_ID:
+				break;
+
+			default:
+				throw new InvalidArgumentException(
+					"Invalid dataset selector [$theDataset]." );				// !@! ==>
+		}
+
+		//
+		// Get clusters.
+		//
+		$clusters =
+			$this->datasetCollection( $theDataset )
+				->distinct( $this->datasetOffset(
+					$theDataset, self::kDATASET_OFFSET_CLUSTER
+				) );
+
+		//
+		// Get teams.
+		//
+		$teams =
+			$this->datasetCollection( $theDataset )
+				->distinct( $this->datasetOffset(
+					$theDataset, self::kDATASET_OFFSET_TEAM
+				) );
+
+	} // tableClusterByTeam.
+
+
+
+/*=======================================================================================
+ *																						*
  *									PROTECTED UTILITIES									*
  *																						*
  *======================================================================================*/
@@ -6746,7 +6818,7 @@ class SMARTLoader
 				array_keys( $this->ChildDatasetFields() ),
 				$defaults,
 				[ self::kCOLLECTION_OFFSET_HOUSEHOLD_ID,
-				  self::kCOLLECTION_OFFSET_MOTHER_ID ]
+					self::kCOLLECTION_OFFSET_MOTHER_ID ]
 			);																		// ==>
 
 	} // getChildFields.
