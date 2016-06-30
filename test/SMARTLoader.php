@@ -525,7 +525,11 @@ echo( "\n=======================================================================
 // Merge survey.
 //
 echo( '$test->MergeSurvey();' . "\n" );
-$test->MergeSurvey();
+try{
+	$test->MergeSurvey();
+} catch( Exception $error ){
+	echo( $error->getMessage() . "\n" );
+}
 
 echo( "\n====================================================================================\n\n" );
 
@@ -533,7 +537,31 @@ echo( "\n=======================================================================
 // Export survey.
 //
 echo( '$test->ExportSurvey( kPATH_LIBRARY_ROOT . \'test/SMART/Survey.xlsx\', SMARTLoader::kDATASET_SELECTOR_CHILD + SMARTLoader::kDATASET_SELECTOR_MOTHER + SMARTLoader::kDATASET_SELECTOR_HOUSEHOLD + SMARTLoader::kDATASET_SELECTOR_MERGED );' . "\n" );
-$test->ExportSurvey( kPATH_LIBRARY_ROOT . 'test/SMART/Survey.xlsx', SMARTLoader::kDATASET_SELECTOR_CHILD + SMARTLoader::kDATASET_SELECTOR_MOTHER + SMARTLoader::kDATASET_SELECTOR_HOUSEHOLD + SMARTLoader::kDATASET_SELECTOR_MERGED );
+//$test->ExportSurvey( kPATH_LIBRARY_ROOT . 'test/SMART/Survey.xlsx', SMARTLoader::kDATASET_SELECTOR_CHILD + SMARTLoader::kDATASET_SELECTOR_MOTHER + SMARTLoader::kDATASET_SELECTOR_HOUSEHOLD + SMARTLoader::kDATASET_SELECTOR_MERGED );
+
+echo( "\n====================================================================================\n\n" );
+
+//
+// Get child cluster x team.
+//
+echo( '$result = $test->ChildClusterByLocation();' . "\n" );
+$result = $test->ChildClusterByLocation();
+$html = '<!DOCTYPE html><html><head><style>table, th, td { border: 1px solid black; border-collapse: collapse;}th, td { padding: 5px; text-align: center}</style></head><body>';
+$html .= '<table style="width:100%">';
+$html .= '<tr>';
+foreach( $result[ 0 ] as $value )
+	$html .= "<th>$value</th>";
+$html .= '</tr>';
+for( $i = 1; $i < count( $result ); $i++ )
+{
+	$html .= '<tr>';
+	for( $j = 0; $j < count( $result[ $i ] ); $j++ )
+		$html .= ("<td>" . $result[ $i ][ $j ] . "</td>");
+	$html .= '</tr>';
+}
+$html .= '</table>';
+$html .= '</body></html>';
+echo( "$html\n" );
 
 
 ?>

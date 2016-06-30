@@ -3659,6 +3659,15 @@ class SMARTLoader
 	} // MergeSurvey.
 
 
+
+/*=======================================================================================
+ *																						*
+ *								PUBLIC EXPORT INTERFACE									*
+ *																						*
+ *======================================================================================*/
+
+
+
 	/*===================================================================================
 	 *	ExportSurvey																	*
 	 *==================================================================================*/
@@ -3709,7 +3718,7 @@ class SMARTLoader
 			throw new RuntimeException(
 				"Cannot export file: " .
 				"cache method [$cache_method] not available." );				// !@! ==>
-		
+
 		//
 		// Create Excel object.
 		//
@@ -3827,6 +3836,258 @@ class SMARTLoader
 		$writer->save( $thePath );
 
 	} // ExportSurvey.
+
+
+
+/*=======================================================================================
+ *																						*
+ *								PUBLIC STATISTICAL INTERFACE							*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	ChildClusterByTeam																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return child cluster x team table.</h4>
+	 *
+	 * This method can be used to get a matrix of clusters by teams for the child
+	 * dataset.
+	 *
+	 * @return array				Cluster and Team matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function ChildClusterByTeam()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_CHILD_ID,
+				'Clusters',
+				self::kDATASET_OFFSET_CLUSTER,
+				self::kDATASET_OFFSET_TEAM
+			);																		// ==>
+
+	} // ChildClusterByTeam.
+
+
+	/*===================================================================================
+	 *	MotherClusterByTeam																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return mother cluster x team table.</h4>
+	 *
+	 * This method can be used to get a matrix of clusters by teams for the mother
+	 * dataset.
+	 *
+	 * @return array				Cluster and Team matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function MotherClusterByTeam()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_MOTHER_ID,
+				'Clusters',
+				self::kDATASET_OFFSET_CLUSTER,
+				self::kDATASET_OFFSET_TEAM
+			);																		// ==>
+
+	} // MotherClusterByTeam.
+
+
+	/*===================================================================================
+	 *	HouseholdClusterByTeam																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return household cluster x team table.</h4>
+	 *
+	 * This method can be used to get a matrix of clusters by teams for the household
+	 * dataset.
+	 *
+	 * @return array				Cluster and Team matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function HouseholdClusterByTeam()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_HOUSEHOLD_ID,
+				'Clusters',
+				self::kDATASET_OFFSET_CLUSTER,
+				self::kDATASET_OFFSET_TEAM
+			);																		// ==>
+
+	} // HouseholdClusterByTeam.
+
+
+	/*===================================================================================
+	 *	ChildClusterByLocation															*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return child cluster x location table.</h4>
+	 *
+	 * This method can be used to get a matrix of clusters by locations for the child
+	 * dataset.
+	 *
+	 * @return array				Cluster and Location matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function ChildClusterByLocation()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_CHILD_ID,
+				'Clusters',
+				self::kDATASET_OFFSET_CLUSTER,
+				self::kDATASET_OFFSET_LOCATION
+			);																		// ==>
+
+	} // ChildClusterByLocation.
+
+
+	/*===================================================================================
+	 *	MotherClusterByLocation															*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return mother cluster x location table.</h4>
+	 *
+	 * This method can be used to get a matrix of clusters by locations for the mother
+	 * dataset.
+	 *
+	 * @return array				Cluster and Location matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function MotherClusterByLocation()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_MOTHER_ID,
+				'Clusters',
+				self::kDATASET_OFFSET_CLUSTER,
+				self::kDATASET_OFFSET_LOCATION
+			);																		// ==>
+
+	} // MotherClusterByLocation.
+
+
+	/*===================================================================================
+	 *	HouseholdClusterByLocation														*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return household cluster x location table.</h4>
+	 *
+	 * This method can be used to get a matrix of clusters by locations for the household
+	 * dataset.
+	 *
+	 * @return array				Cluster and Location matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function HouseholdClusterByLocation()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_HOUSEHOLD_ID,
+				'Clusters',
+				self::kDATASET_OFFSET_CLUSTER,
+				self::kDATASET_OFFSET_LOCATION
+			);																		// ==>
+
+	} // HouseholdClusterByLocation.
+
+
+	/*===================================================================================
+	 *	ChildTeamByLocation																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return child team x location table.</h4>
+	 *
+	 * This method can be used to get a matrix of teams by locations for the child
+	 * dataset.
+	 *
+	 * @return array				Team and Location matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function ChildTeamByLocation()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_CHILD_ID,
+				'Teams',
+				self::kDATASET_OFFSET_TEAM,
+				self::kDATASET_OFFSET_LOCATION
+			);																		// ==>
+
+	} // ChildTeamByLocation.
+
+
+	/*===================================================================================
+	 *	MotherTeamByLocation															*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return mother team x location table.</h4>
+	 *
+	 * This method can be used to get a matrix of teams by locations for the mother
+	 * dataset.
+	 *
+	 * @return array				Team and Location matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function MotherTeamByLocation()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_MOTHER_ID,
+				'Teams',
+				self::kDATASET_OFFSET_TEAM,
+				self::kDATASET_OFFSET_LOCATION
+			);																		// ==>
+
+	} // MotherTeamByLocation.
+
+
+	/*===================================================================================
+	 *	HouseholdTeamByLocation															*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return household team x location table.</h4>
+	 *
+	 * This method can be used to get a matrix of teams by locations for the household
+	 * dataset.
+	 *
+	 * @return array				Team and Location matrix.
+	 *
+	 * @uses getMatrixTable()
+	 */
+	public function HouseholdTeamByLocation()
+	{
+		return
+			$this->getMatrixTable(
+				self::kDDICT_HOUSEHOLD_ID,
+				'Teams',
+				self::kDATASET_OFFSET_TEAM,
+				self::kDATASET_OFFSET_LOCATION
+			);																		// ==>
+
+	} // HouseholdTeamByLocation.
 
 
 
@@ -6704,31 +6965,162 @@ class SMARTLoader
 
 
 	/*===================================================================================
-	 *	tableClusterByTeam																*
+	 *	getMatrixTable																	*
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Get cluster x team table.</h4>
+	 * <h4>Get a matrix table.</h4>
 	 *
-	 * This method can be used to retrieve a table providing the list of clusters with the
-	 * number of entries for each team.
+	 * This method can be used to create a matrix of occurrences between two dataset fields.
+	 * The method expects three parameters:
 	 *
-	 * The method expects a single parameter representing the dataset selector as
-	 * {@link kDDICT_CHILD_ID} for the child, {@link kDDICT_MOTHER_ID} for the mother, or
-	 * {@link kDDICT_HOUSEHOLD_ID} for the household dataset; if the selector is not among
-	 * these values, the method will raise an exception.
+	 * <ul>
+	 * 	<li><b>$theDataset</b>: Dataset selector:
+	 *	 <ul>
+	 *	 	<li><tt>{@link kDDICT_CHILD_ID}<tt>: Child dataset.
+	 *	 	<li><tt>{@link kDDICT_MOTHER_ID}<tt>: Mother dataset.
+	 *	 	<li><tt>{@link kDDICT_HOUSEHOLD_ID}<tt>: Household dataset.
+	 *	 </ul>
+	 * 	<li><b>$theRowTitle</b>: Title of field featured in rows.
+	 * 	<li><b>$theRowField</b>: Field featured in rows.
+	 * 	<li><b>$theColField</b>: Field featured in columns.
+	 * </ul>
 	 *
-	 * The method will return an array of documents having as identifier the cluster
-	 * number and as other fields the list of team numbers with the relative match count.
+	 * The method will return a table having as rows the distinct values of
+	 * <tt>$theRowField</tt> and as columns the cross reference with the distinct values
+	 * of <tt>$theColField</tt>. The table has the following structure:
+	 *
+	 * <ul>
+	 * 	<li><tt>Row 0</tt>: Header row:
+	 * 	 <ul>
+	 * 		<li><tt>Column 0</tt>: The value of <tt>$theRowTitle</tt>.
+	 * 		<li><i>Other columns</i>: The distinct values of the <tt>$theColField</tt>.
+	 * 	 </ul>
+	 * 	<li><i>Other rows</i>: Data rows:
+	 * 	 <ul>
+	 * 		<li><tt>Column 0</tt>: The <tt>$theRowField</tt> value.
+	 * 		<li><i>Other columns</i>: The occurrence count of the cross reference between
+	 * 			the current <tt>$theRowField</tt> and the <tt>$theColField</tt>
+	 * 			corresponding to the current column.
+	 * 	 </ul>
+	 * </ul>
 	 *
 	 * @param string				$theDataset			Dataset selector.
 	 * @return array
+	 *
+	 * @uses datasetOffset()
+	 * @uses datasetCollection()
+	 * @uses getMatrix()
+	 */
+	protected function getMatrixTable( string $theDataset,
+									   string $theRowTitle,
+									   string $theRowField,
+									   string $theColField )
+	{
+		//
+		// Init local storage.
+		//
+		$table = [];
+
+		//
+		// Get X values.
+		//
+		$x =
+			$this->datasetCollection( $theDataset )
+				->distinct( $this->datasetOffset( $theDataset, $theRowField ) );
+		sort( $x );
+
+		//
+		// Get Y values.
+		//
+		$y =
+			$this->datasetCollection( $theDataset )
+				->distinct( $this->datasetOffset( $theDataset, $theColField ) );
+		sort( $y );
+
+		//
+		// Load header.
+		//
+		$table[ 0 ][ 0 ] = $theRowTitle;
+		for( $i = 0; $i < count( $y ); $i++ )
+			$table[ 0 ][ $i + 1 ] = $y[ $i ];
+
+		//
+		// Fill table.
+		//
+		$clusters_index = [];
+		for( $i = 0; $i < count( $x ); $i++ )
+		{
+			//
+			// Set X index.
+			//
+			$clusters_index[ $x[ $i ] ] = $i + 1;
+
+			//
+			// Set X number.
+			//
+			$table[ $i + 1 ][ 0 ] = $x[ $i ];
+
+			//
+			// Iterate Y.
+			//
+			for( $j = 0; $j < count( $y ); $j++ )
+				$table[ $i + 1 ][ $j + 1 ] = '';
+
+		} // Iterating X.
+
+		//
+		// Load table.
+		//
+		$cursor = $this->getMatrix( $theDataset, $theRowField, $theColField );
+		foreach( $cursor as $document )
+			$table[ $clusters_index[ $document[ 'X' ] ] ][ $document[ 'Y' ] ]
+				= $document[ 'C' ];
+
+		return $table;																// ==>
+
+	} // getMatrixTable.
+
+
+	/*===================================================================================
+	 *	getMatrix																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Get a matrix.</h4>
+	 *
+	 * This method can be used to retrieve a lisy of cross-reference occurrences between two
+	 * dataset fields. The method expects three parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theDataset</b>: Dataset selector:
+	 *	 <ul>
+	 *	 	<li><tt>{@link kDDICT_CHILD_ID}<tt>: Child dataset.
+	 *	 	<li><tt>{@link kDDICT_MOTHER_ID}<tt>: Mother dataset.
+	 *	 	<li><tt>{@link kDDICT_HOUSEHOLD_ID}<tt>: Household dataset.
+	 *	 </ul>
+	 * 	<li><b>$theRowField</b>: Field featured in rows.
+	 * 	<li><b>$theColField</b>: Field featured in columns.
+	 * </ul>
+	 *
+	 * The method will return a cursor with documents having the following structure:
+	 *
+	 * <ul>
+	 * 	<li><tt>X</tt>: Cluster number.
+	 * 	<li><tt>Y</tt>: Team number.
+	 * 	<li><tt>C</tt>: Combination occurrences.
+	 * </ul>
+	 *
+	 * @param string				$theDataset			Dataset selector.
+	 * @return \MongoDB\Driver\Cursor
 	 * @throws InvalidArgumentException
 	 *
+	 * @uses datasetOffset()
 	 * @uses datasetCollection()
-	 * @uses dictionaryList()
 	 */
-	protected function tableClusterByTeam( string $theDataset )
+	protected function getMatrix( string $theDataset,
+								  string $theRowField,
+								  string $theColField )
 	{
 		//
 		// Check dataset selector.
@@ -6746,24 +7138,25 @@ class SMARTLoader
 		}
 
 		//
-		// Get clusters.
+		// Get relationships.
 		//
-		$clusters =
-			$this->datasetCollection( $theDataset )
-				->distinct( $this->datasetOffset(
-					$theDataset, self::kDATASET_OFFSET_CLUSTER
-				) );
+		$x = $this->datasetOffset( $theDataset, $theRowField );
+		$y = $this->datasetOffset( $theDataset, $theColField );
+		$pipeline = [
+			[ '$group' => [
+				'_id' => [ 'X' => '$' . $x, 'Y' => '$' . $y ],
+				'count' => [ '$sum' => 1 ] ] ],
+			[ '$project' => [
+				'_id' => false,
+				'X' => '$' . '_id.X',
+				'Y' => '$' . '_id.Y',
+				'C' => '$' . 'count'
+			] ]
+		];
 
-		//
-		// Get teams.
-		//
-		$teams =
-			$this->datasetCollection( $theDataset )
-				->distinct( $this->datasetOffset(
-					$theDataset, self::kDATASET_OFFSET_TEAM
-				) );
+		return $this->datasetCollection( $theDataset )->aggregate( $pipeline );		// ==>
 
-	} // tableClusterByTeam.
+	} // getMatrix.
 
 
 
