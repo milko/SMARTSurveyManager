@@ -2639,7 +2639,7 @@ class SMARTLoader
 				$this->mDDICTInfo[ $dataset ]
 					= ( $document === NULL )
 					? $this->newDataDictionary( $dataset )
-					: $document->getArrayCopy();
+					: $this->toArray( $document );
 			}
 
 			return TRUE;															// ==>
@@ -4088,6 +4088,49 @@ class SMARTLoader
 			);																		// ==>
 
 	} // HouseholdTeamByLocation.
+
+
+
+/*=======================================================================================
+ *																						*
+ *									PUBLIC UTILITIES									*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	toArray 																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return the object properties as an array.</h4><p />
+	 *
+	 * This method can be used to convert the object properties to an array, this will
+	 * take care of converting embedded objects.
+	 *
+	 * @param mixed					$theObject			Object or array to convert.
+	 * @return array				Object and embedded properties as an array.
+	 *
+	 * @uses convertToArray()
+	 */
+	public function toArray( $theObject )
+	{
+		//
+		// Init local storage.
+		//
+		$array = [];
+		if( $theObject instanceof ArrayObject )
+			$theObject = $theObject->getArrayCopy();
+
+		//
+		// Convert to array.
+		//
+		$this->convertToArray( $theObject, $array );
+
+		return $array;        														// ==>
+
+	} // toArray.
 
 
 
@@ -7157,6 +7200,79 @@ class SMARTLoader
 		return $this->datasetCollection( $theDataset )->aggregate( $pipeline );		// ==>
 
 	} // getMatrix.
+
+
+
+/*=======================================================================================
+ *																						*
+ *							PROTECTED SERIALISATION INTERFACE							*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	convertToArray																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Convert embedded objects to array.</h4><p />
+	 *
+	 * This method is used by the {@link toArray()} method to convert embedded properties
+	 * derived from this class, it willtraverse the object's properties structured
+	 * converting any encountered objects to arrays.
+	 *
+	 * There is no error checking on parameters, it is the caller's responsibility.
+	 *
+	 * @param array					$theSource			Source structure.
+	 * @param array				   &$theDestination		Reference to the destination array.
+	 * @return void
+	 */
+	protected function convertToArray( $theSource, &$theDestination )
+	{
+		//
+		// Traverse source.
+		//
+		$keys = array_keys( $theSource );
+		foreach( $keys as $key )
+		{
+			//
+			// Init local storage.
+			//
+			$value = & $theSource[ $key ];
+
+			//
+			// Handle collections.
+			//
+			if( is_array( $value )
+			 || ($value instanceof ArrayObject) )
+			{
+				//
+				// Initialise destination element.
+				//
+				$theDestination[ $key ] = NULL;
+
+				//
+				// Convert.
+				//
+				if( $value instanceof ArrayObject )
+					$this->convertToArray( $value->getArrayCopy(),
+						$theDestination[ $key ] );
+				else
+					$this->convertToArray( $value,
+						$theDestination[ $key ] );
+
+			} // Is collection.
+
+			//
+			// Handle scalars.
+			//
+			else
+				$theDestination[ $key ] = $value;
+
+		} // Traversing source.
+
+	} // convertToArray.
 
 
 
