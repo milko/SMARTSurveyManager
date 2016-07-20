@@ -1,6 +1,7 @@
 composer.phar
 /docs/*
-/old/
+/old
+/vendor
 /test/SMART/CHILD.xlsx
 /test/SMART/MOTHER.xlsx
 /test/SMART/HOUSEHOLD.xlsx
