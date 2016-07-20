@@ -175,6 +175,15 @@ class StataFile extends ArrayObject
 	const kTOKEN_DATASET_CHARACTERISTICS = 'characteristics';
 
 	/**
+	 * <h4>Dataset characteristics element marker.</h4>
+	 *
+	 * This constant holds the <em>dataset characteristics element file marker</em>.
+	 *
+	 * @var string
+	 */
+	const kTOKEN_DATASET_CHARACTERISTICS_ELM = 'ch';
+
+	/**
 	 * <h4>Dataset data marker.</h4>
 	 *
 	 * This constant holds the <em>dataset data file marker</em>.
@@ -263,6 +272,81 @@ class StataFile extends ArrayObject
 	 * @var string
 	 */
 	const kOFFSET_SORT = 'sort';
+
+	/**
+	 * <h4>Variable enumeration offset.</h4>
+	 *
+	 * This constant holds the <em>variable enumeration offset</em> in the data dictionary,
+	 * this element contains an array structured as following:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kOFFSET_ENUM_NAME}</tt>: The controlled vocabulary name.
+	 * 	<li><tt>{@link kOFFSET_ENUM_ELMS}</tt>: The controlled vocabulary elements.
+	 * </ul>
+	 *
+	 * @var string
+	 */
+	const kOFFSET_ENUM = 'enum';
+
+	/**
+	 * <h4>Controlled vocabulary name offset.</h4>
+	 *
+	 * This constant holds the <em>comtrolled vocabulary name offset</em> in the data
+	 * dictionary.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_ENUM_NAME = 'name';
+
+	/**
+	 * <h4>Controlled vocabulary elements offset.</h4>
+	 *
+	 * This constant holds the <em>comtrolled vocabulary elements offset</em> in the data
+	 * dictionary.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_ENUM_ELMS = 'elms';
+
+	/**
+	 * <h4>Variable characteristics size offset.</h4>
+	 *
+	 * This constant holds the <em>variable characteristics record size offset</em> in the
+	 * data dictionary.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_CHARS_SIZE = 'size';
+
+	/**
+	 * <h4>Variable characteristics variable offset.</h4>
+	 *
+	 * This constant holds the <em>variable characteristics variable name offset</em> in the
+	 * data dictionary.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_CHARS_VARNAME = 'var';
+
+	/**
+	 * <h4>Variable characteristics name offset.</h4>
+	 *
+	 * This constant holds the <em>variable characteristics name offset</em> in the
+	 * data dictionary.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_CHARS_NAME = 'name';
+
+	/**
+	 * <h4>Variable characteristics data offset.</h4>
+	 *
+	 * This constant holds the <em>variable characteristics data offset</em> in the
+	 * data dictionary.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_CHARS_DATA = 'data';
 
 	/**
 	 * <h4>File path.</h4>
@@ -365,6 +449,23 @@ class StataFile extends ArrayObject
 	 * @var array
 	 */
 	protected $mDict = [];
+
+	/**
+	 * <h4>Characteristics.</h4>
+	 *
+	 * This data member holds the <em>characteristics</em>, it is an array of arrays
+	 * structured as follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kOFFSET_CHARS_SIZE}</tt>: The characteristics record size.
+	 * 	<li><tt>{@link kOFFSET_CHARS_VARNAME}</tt>: The characteristics variable name.
+	 * 	<li><tt>{@link kOFFSET_CHARS_NAME}</tt>: The characteristics name.
+	 * 	<li><tt>{@link kOFFSET_CHARS_DATA}</tt>: The characteristics data.
+	 * </ul>
+	 *
+	 * @var array
+	 */
+	protected $mChars = [];
 
 
 
@@ -1194,8 +1295,8 @@ class StataFile extends ArrayObject
 	 * @throws InvalidArgumentException
 	 */
 	public function VariableFormat(		 $theVariable = NULL,
-										 $theValue = NULL,
-									bool $asName = FALSE )
+											$theValue = NULL,
+											bool $asName = FALSE )
 	{
 		//
 		// Set all formats.
@@ -1203,7 +1304,7 @@ class StataFile extends ArrayObject
 		if( is_array( $theValue ) )
 		{
 			//
-			// Iterate names.
+			// Iterate formats.
 			//
 			foreach( $theValue as $key => $value )
 				$list[ $key ]
@@ -1217,7 +1318,7 @@ class StataFile extends ArrayObject
 		// Get all formats.
 		//
 		if( ($theValue === NULL)
-		 && ($theVariable === NULL) )
+			&& ($theVariable === NULL) )
 		{
 			//
 			// Iterate data dictionary.
@@ -1261,7 +1362,7 @@ class StataFile extends ArrayObject
 		// Check variable index.
 		//
 		if( ($theVariable < 0)
-		 || ($theVariable > $this->VariablesCount()) )
+			|| ($theVariable > $this->VariablesCount()) )
 			throw new InvalidArgumentException(
 				"Invalid variable index [$theVariable]." );						// !@! ==>
 
@@ -1276,6 +1377,401 @@ class StataFile extends ArrayObject
 				= mb_substr( (string)$theValue, 0, 56, '8bit' );					// ==>
 
 	} // VariableFormat.
+
+
+	/*===================================================================================
+	 *	VariableLabel																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set or retrieve the dataset variable label(s).</h4>
+	 *
+	 * This method can be used to set or retrieve the dataset variable label(s), the method
+	 * expects the following parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theVariable</b>: Variable index or <tt>NULL</tt> for all variables.
+	 * 	<li><b>$theValue</b>: The new variable label, list or operation:
+	 * 	 <ul>
+	 * 		<li><tt>NULL</tt>: Return the current value.
+	 * 		<li><tt>string</tt>: Set the new value related to the provided variable index.
+	 * 		<li><tt>array</tt>: Set all values; <em>it is assumed the full list was
+	 * 			provided</em>.
+	 * 	 </ul>
+	 * 	<li><b>$asName</b>: If <tt>TRUE</tt> it is assumed the variable is provided by name,
+	 * 		if not, it is assumed the variable(s) are provided as the variable index (int).
+	 * </ul>
+	 *
+	 * @param int					$theVariable		Variable index or <tt>NULL</tt>.
+	 * @param mixed					$theValue			New value, or operation.
+	 * @param bool					$asName				<tt>TRUE</tt> variable name(s).
+	 * @return mixed				Variable label or all labels.
+	 * @throws InvalidArgumentException
+	 */
+	public function VariableLabel(		 $theVariable = NULL,
+										 $theValue = NULL,
+									bool $asName = FALSE )
+	{
+		//
+		// Set all labels.
+		//
+		if( is_array( $theValue ) )
+		{
+			//
+			// Iterate labels.
+			//
+			foreach( $theValue as $key => $value )
+				$list[ $key ]
+					= $this->VariableLabel( $key, $value, $asName );
+
+			return $theValue;														// ==>
+
+		} // Set all labels.
+
+		//
+		// Get all labels.
+		//
+		if( ($theValue === NULL)
+		 && ($theVariable === NULL) )
+		{
+			//
+			// Iterate data dictionary.
+			//
+			$list = [];
+			foreach( array_keys( $this->mDict ) as $key )
+			{
+				//
+				// Handle names.
+				//
+				if( $asName )
+					$list[ $this->mDict[ $key ][ self::kOFFSET_NAME ] ]
+						= $this->mDict[ $key ][ self::kOFFSET_LABEL ];
+
+				//
+				// Handle indexes.
+				//
+				else
+					$list[ $key ]
+						= $this->mDict[ $key ][ self::kOFFSET_LABEL ];
+
+			} // Iterating data dictionary.
+
+			return $list;															// ==>
+
+		} // Get all labels.
+
+		//
+		// Convert variable name to index.
+		//
+		if( ! is_int( $theVariable ) )
+		{
+			$tmp = $this->parseName( $theVariable );
+			if( $tmp === NULL )
+				throw new InvalidArgumentException(
+					"Unknown variable name [$theVariable]." );					// !@! ==>
+			$theVariable = (int)$tmp;
+		}
+
+		//
+		// Check variable index.
+		//
+		if( ($theVariable < 0)
+		 || ($theVariable > $this->VariablesCount()) )
+			throw new InvalidArgumentException(
+				"Invalid variable index [$theVariable]." );						// !@! ==>
+
+		//
+		// Return current value.
+		//
+		if( $theValue === NULL )
+			return $this->mDict[ $theVariable ][ self::kOFFSET_LABEL ];				// ==>
+
+		return
+			$this->mDict[ $theVariable ][ self::kOFFSET_LABEL ]
+				= mb_substr( (string)$theValue, 0, 320, '8bit' );					// ==>
+
+	} // VariableLabel.
+
+
+	/*===================================================================================
+	 *	VariableEnumName																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set or retrieve the dataset variable enumeration name(s).</h4>
+	 *
+	 * This method can be used to set or retrieve the dataset enumeration name(s), the
+	 * method expects the following parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theVariable</b>: Variable index, name or <tt>NULL</tt> for all variables.
+	 * 	<li><b>$theValue</b>: The new enumeration name, list or operation:
+	 * 	 <ul>
+	 * 		<li><tt>NULL</tt>: Return the current value.
+	 * 		<li><tt>string</tt>: Set the new value related to the provided variable index.
+	 * 		<li><tt>array</tt>: Set all values; <em>it is assumed the full list was
+	 * 			provided</em>.
+	 * 	 </ul>
+	 * 	<li><b>$asName</b>: If <tt>TRUE</tt> it is assumed the variable is provided by name,
+	 * 		if not, it is assumed the variable(s) are provided as the variable index (int).
+	 * </ul>
+	 *
+	 * @param int					$theVariable		Variable index or <tt>NULL</tt>.
+	 * @param mixed					$theValue			New value, or operation.
+	 * @param bool					$asName				<tt>TRUE</tt> variable name(s).
+	 * @return mixed				Enumeration name or all enumeration names.
+	 * @throws InvalidArgumentException
+	 */
+	public function VariableEnumName(	   $theVariable = NULL,
+											$theValue = NULL,
+											bool $asName = FALSE )
+	{
+		//
+		// Set all names.
+		//
+		if( is_array( $theValue ) )
+		{
+			//
+			// Iterate enumerations.
+			//
+			foreach( $theValue as $key => $value )
+				$list[ $key ]
+					= $this->VariableEnumName( $key, $value, $asName );
+
+			return $theValue;														// ==>
+
+		} // Set all names.
+
+		//
+		// Get all names.
+		//
+		if( ($theValue === NULL)
+			&& ($theVariable === NULL) )
+		{
+			//
+			// Iterate data dictionary.
+			//
+			$list = [];
+			foreach( array_keys( $this->mDict ) as $key )
+			{
+				//
+				// Check if it has enumeration.
+				//
+				if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $key ] ) )
+				{
+					//
+					// Handle names.
+					//
+					if( $asName )
+						$list[ $this->mDict[ $key ][ self::kOFFSET_NAME ] ]
+							= $this->mDict[ $key ]
+										  [ self::kOFFSET_ENUM ]
+										  [ self::kOFFSET_ENUM_NAME ];
+
+					//
+					// Handle indexes.
+					//
+					else
+						$list[ $key ]
+							= $this->mDict[ $key ]
+										  [ self::kOFFSET_ENUM ]
+										  [ self::kOFFSET_ENUM_NAME ];
+
+				} // Has enumeration name.
+
+			} // Iterating data dictionary.
+
+			return $list;															// ==>
+
+		} // Get all enumerations.
+
+		//
+		// Convert variable name to index.
+		//
+		if( ! is_int( $theVariable ) )
+		{
+			$tmp = $this->parseName( $theVariable );
+			if( $tmp === NULL )
+				throw new InvalidArgumentException(
+					"Unknown variable name [$theVariable]." );					// !@! ==>
+			$theVariable = (int)$tmp;
+		}
+
+		//
+		// Check variable index.
+		//
+		if( ($theVariable < 0)
+			|| ($theVariable > $this->VariablesCount()) )
+			throw new InvalidArgumentException(
+				"Invalid variable index [$theVariable]." );						// !@! ==>
+
+		//
+		// Return current value.
+		//
+		if( $theValue === NULL )
+		{
+			//
+			// Return enumeration name.
+			//
+			if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
+				return $this->mDict[ $theVariable ]
+								   [ self::kOFFSET_ENUM ]
+								   [ self::kOFFSET_ENUM_NAME ];						// ==>
+
+			return NULL;															// ==>
+
+		} // Return current value.
+
+		//
+		// Create enumeration record.
+		//
+		if( ! array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
+			$this->mDict[ $theVariable ][ self::kOFFSET_ENUM ]
+				= [];
+
+		return
+			$this->mDict[ $theVariable ]
+						[ self::kOFFSET_ENUM ]
+						[ self::kOFFSET_ENUM_NAME ]
+				= (string)$theValue;												// ==>
+
+	} // VariableEnumName.
+
+
+	/*===================================================================================
+	 *	VariableEnumVals																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set or retrieve the dataset variable enumeration value(s).</h4>
+	 *
+	 * This method can be used to set or retrieve the dataset enumeration value(s), the
+	 * method expects the following parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theVariable</b>: Variable index, name or <tt>NULL</tt> for all variables.
+	 * 	<li><b>$theValue</b>: The new enumeration values list or operation:
+	 * 	 <ul>
+	 * 		<li><tt>NULL</tt>: Return the current value.
+	 * 		<li><tt>array</tt>: Set the new values list related to the provided variable
+	 * 			index.
+	 * 		<li><em>other</em>: Any other type will be interpreted as a list with a single
+	 * 			value.
+	 * 	 </ul>
+	 * 	<li><b>$asName</b>: If <tt>TRUE</tt> it is assumed the variable is provided by name,
+	 * 		if not, it is assumed the variable(s) are provided as the variable index (int).
+	 * </ul>
+	 *
+	 * @param int					$theVariable		Variable index or <tt>NULL</tt>.
+	 * @param mixed					$theValue			New value, or operation.
+	 * @param bool					$asName				<tt>TRUE</tt> variable name(s).
+	 * @return mixed				Enumeration name or all enumeration values.
+	 * @throws InvalidArgumentException
+	 */
+	public function VariableEnumVals(	   $theVariable = NULL,
+										   $theValue = NULL,
+									  bool $asName = FALSE )
+	{
+		//
+		// Get all names.
+		//
+		if( ($theValue === NULL)
+		 && ($theVariable === NULL) )
+		{
+			//
+			// Iterate data dictionary.
+			//
+			$list = [];
+			foreach( array_keys( $this->mDict ) as $key )
+			{
+				//
+				// Check if it has enumeration.
+				//
+				if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $key ] ) )
+				{
+					//
+					// Handle names.
+					//
+					if( $asName )
+						$list[ $this->mDict[ $key ][ self::kOFFSET_NAME ] ]
+							= $this->mDict[ $key ]
+										  [ self::kOFFSET_ENUM ]
+										  [ self::kOFFSET_ENUM_ELMS ];
+
+					//
+					// Handle indexes.
+					//
+					else
+						$list[ $key ]
+							= $this->mDict[ $key ]
+										  [ self::kOFFSET_ENUM ]
+										  [ self::kOFFSET_ENUM_ELMS ];
+
+				} // Has enumeration values.
+
+			} // Iterating data dictionary.
+
+			return $list;															// ==>
+
+		} // Get all enumerations.
+
+		//
+		// Convert variable name to index.
+		//
+		if( ! is_int( $theVariable ) )
+		{
+			$tmp = $this->parseName( $theVariable );
+			if( $tmp === NULL )
+				throw new InvalidArgumentException(
+					"Unknown variable name [$theVariable]." );					// !@! ==>
+			$theVariable = (int)$tmp;
+		}
+
+		//
+		// Check variable index.
+		//
+		if( ($theVariable < 0)
+		 || ($theVariable > $this->VariablesCount()) )
+			throw new InvalidArgumentException(
+				"Invalid variable index [$theVariable]." );						// !@! ==>
+
+		//
+		// Return current value.
+		//
+		if( $theValue === NULL )
+		{
+			//
+			// Return enumeration name.
+			//
+			if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
+				return $this->mDict[ $theVariable ]
+								   [ self::kOFFSET_ENUM ]
+								   [ self::kOFFSET_ENUM_ELMS ];						// ==>
+
+			return NULL;															// ==>
+
+		} // Return current value.
+
+		//
+		// Check provided value.
+		//
+		if( ! is_array( $theValue ) )
+			$theValue = [ $theValue ];
+
+		//
+		// Create enumeration record.
+		//
+		if( ! array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
+			$this->mDict[ $theVariable ][ self::kOFFSET_ENUM ]
+				= [];
+
+		return
+			$this->mDict[ $theVariable ]
+						[ self::kOFFSET_ENUM ]
+						[ self::kOFFSET_ENUM_ELMS ]
+				= $theValue;														// ==>
+
+	} // VariableEnumVals.
 
 
 
@@ -1332,6 +1828,9 @@ class StataFile extends ArrayObject
 		$this->namesRead( $file );
 		$this->sortRead( $file );
 		$this->formatRead( $file );
+		$this->valueLabelRead( $file );
+		$this->labelRead( $file );
+		$this->characteristicsRead( $file );
 
 		return $file;																// ==>
 
@@ -1404,6 +1903,24 @@ class StataFile extends ArrayObject
 		//
 		$this->formatWrite( $file );
 		$this->mMap[ self::kTOKEN_DATASET_VALABNAMES ] = $file->ftell();
+
+		//
+		// Write value label names.
+		//
+		$this->valueLabelWrite( $file );
+		$this->mMap[ self::kTOKEN_DATASET_VARLABEL ] = $file->ftell();
+
+		//
+		// Write labels.
+		//
+		$this->labelWrite( $file );
+		$this->mMap[ self::kTOKEN_DATASET_CHARACTERISTICS ] = $file->ftell();
+
+		//
+		// Write characteristics.
+		//
+		$this->characteristicsWrite( $file );
+		$this->mMap[ self::kTOKEN_DATASET_DATA ] = $file->ftell();
 
 		return $file;																// ==>
 
@@ -1481,7 +1998,7 @@ class StataFile extends ArrayObject
 	 * @uses TimeStamp()
 	 * @uses readToken()
 	 * @uses readUShort()
-	 * @uses readULong()
+	 * @uses readUInt64()
 	 * @uses readBString()
 	 * @uses readTimeStamp()
 	 */
@@ -1522,7 +2039,7 @@ class StataFile extends ArrayObject
 		// Get observations count.
 		//
 		$this->readToken( $theFile, self::kTOKEN_HEADER_RECS, FALSE );
-		$this->ObservationsCount( $this->readULong( $theFile ) );
+		$this->ObservationsCount( $this->readUInt64( $theFile ) );
 		$this->readToken( $theFile, self::kTOKEN_HEADER_RECS, TRUE );
 
 		//
@@ -1579,7 +2096,7 @@ class StataFile extends ArrayObject
 	 * @uses TimeStamp()
 	 * @uses readToken()
 	 * @uses readUShort()
-	 * @uses readULong()
+	 * @uses readUInt64()
 	 * @uses readBString()
 	 * @uses readTimeStamp()
 	 */
@@ -1626,7 +2143,7 @@ class StataFile extends ArrayObject
 		// Write observations count.
 		//
 		$this->writeToken( $theFile, self::kTOKEN_HEADER_RECS, FALSE );
-		$this->writeULong( $theFile, $this->ObservationsCount() );
+		$this->writeUInt64( $theFile, $this->ObservationsCount() );
 		$this->writeToken( $theFile, self::kTOKEN_HEADER_RECS, TRUE );
 
 		//
@@ -1719,7 +2236,7 @@ class StataFile extends ArrayObject
 		//
 		foreach( array_keys( $this->mMap ) as $offset )
 			$this->mMap[ $offset ]
-				= $this->readULong( $theFile );
+				= $this->readUInt64( $theFile );
 
 		//
 		// Get closing token.
@@ -1752,7 +2269,7 @@ class StataFile extends ArrayObject
 		// Write file offsets.
 		//
 		foreach( $this->mMap as $offset )
-			$this->writeULong( $theFile, $offset );
+			$this->writeUInt64( $theFile, $offset );
 
 		//
 		// Write closing token.
@@ -2114,6 +2631,331 @@ class StataFile extends ArrayObject
 	} // formatWrite.
 
 
+	/*===================================================================================
+	 *	valueLabelRead																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read the variable value labels.</h4>
+	 *
+	 * This method can be used to read the variable value labels from the provided file, the
+	 * method expects the file pointer to be set on the value labels file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 */
+	protected function valueLabelRead( SplFileObject $theFile )
+	{
+		//
+		// Get opening token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, FALSE );
+
+		//
+		// Iterate labels.
+		//
+		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
+		{
+			$label = $this->readCString( $theFile, 129 );
+			if( strlen( $label ) )
+				$this->VariableEnumName( $variable, $label, FALSE );
+		}
+
+		//
+		// Get closing token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, TRUE );
+
+	} // valueLabelRead.
+
+
+	/*===================================================================================
+	 *	valueLabelWrite																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write the variable value labels.</h4>
+	 *
+	 * This method can be used to write the variable value labels into the provided file,
+	 * the method expects the file pointer to be set on the labels token.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 */
+	protected function valueLabelWrite( SplFileObject $theFile )
+	{
+		//
+		// Write opening token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, FALSE );
+
+		//
+		// Iterate labels.
+		//
+		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
+			$this->writeCString(
+				$theFile, 129, (string)$this->VariableEnumName( $variable )
+			);
+
+		//
+		// Write closing token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, TRUE );
+
+	} // valueLabelWrite.
+
+
+	/*===================================================================================
+	 *	labelRead																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read the variable labels.</h4>
+	 *
+	 * This method can be used to read the variable labels from the provided file, the
+	 * method expects the file pointer to be set on the labels file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 */
+	protected function labelRead( SplFileObject $theFile )
+	{
+		//
+		// Get opening token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_VARLABEL, FALSE );
+
+		//
+		// Iterate labels.
+		//
+		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
+			$this->VariableLabel( $variable, $this->readCString( $theFile, 321 ), FALSE );
+
+		//
+		// Get closing token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_VARLABEL, TRUE );
+
+	} // labelRead.
+
+
+	/*===================================================================================
+	 *	labelWrite																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write the variable labels.</h4>
+	 *
+	 * This method can be used to write the variable labels into the provided file, the
+	 * method expects the file pointer to be set on the labels token.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 */
+	protected function labelWrite( SplFileObject $theFile )
+	{
+		//
+		// Write opening token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_VARLABEL, FALSE );
+
+		//
+		// Iterate labels.
+		//
+		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
+			$this->writeCString( $theFile, 321, $this->VariableLabel( $variable ) );
+
+		//
+		// Write closing token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_VARLABEL, TRUE );
+
+	} // labelWrite.
+
+
+	/*===================================================================================
+	 *	characteristicsRead																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read the characteristics.</h4>
+	 *
+	 * This method can be used to read the characteristics from the provided file, the
+	 * method expects the file pointer to be set on the characteristics file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @throws RuntimeException
+	 */
+	protected function characteristicsRead( SplFileObject $theFile )
+	{
+		//
+		// Init characteristics.
+		//
+		$this->mChars = [];
+
+		//
+		// Get opening token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS, FALSE );
+
+		//
+		// Iterate characteristics.
+		//
+		while( TRUE )
+		{
+			//
+			// Check if there is a characteristics.
+			//
+			$tmp = $theFile->fread( 4 );
+			if( $tmp == '<ch>' )
+			{
+				//
+				// Add element.
+				//
+				$index = count( $this->mChars );
+				$this->mChars[ $index ] = [];
+				$element = & $this->mChars[ $index ];
+
+				//
+				// Read block size.
+				//
+				$element[ self::kOFFSET_CHARS_SIZE ]
+					= $this->readUInt32( $theFile );
+
+				//
+				// Read variable name.
+				//
+				$element[ self::kOFFSET_CHARS_VARNAME ]
+					= $this->readCString( $theFile, 129 );
+
+				//
+				// Read characteristic name.
+				//
+				$element[ self::kOFFSET_CHARS_NAME ]
+					= $this->readCString( $theFile, 129 );
+
+				//
+				// Read characteristic data.
+				//
+				$element[ self::kOFFSET_CHARS_DATA ]
+					= $this->readCString(
+						$theFile, $element[ self::kOFFSET_CHARS_SIZE ] - (129 * 2)
+					);
+
+				//
+				// Read end of element.
+				//
+				$tmp = $theFile->fread( 5 );
+				if( $tmp == '</ch>' )
+					continue;													// =>
+
+				throw new RuntimeException(
+					"Unable to read end of characteristics element block " .
+					"[$tmp]." );												// !@! ==>
+
+			} // Found characteristic.
+
+			//
+			// Handle end of block.
+			//
+			elseif( $tmp == '</ch' )
+			{
+				//
+				// Init local storage.
+				//
+				$token = 'aracteristics>';
+
+				//
+				// Try to read rest of closing block.
+				//
+				$tmp = $theFile->fread( strlen( $token ) );
+				if( $tmp != $token )
+					throw new RuntimeException(
+						"Unable to read end of characteristics block " .
+						"[$tmp]." );											// !@! ==>
+
+				//
+				// Exit loop.
+				//
+				break;															// =>
+
+			} // End of block.
+
+			//
+			// Handle error.
+			//
+			else
+				throw new RuntimeException(
+					"Unexpected end of characteristics block [$tmp]." );		// !@! ==>
+
+		} // Iterating characteristics.
+
+	} // characteristicsRead.
+
+
+	/*===================================================================================
+	 *	characteristicsWrite															*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write the characteristics.</h4>
+	 *
+	 * This method can be used to write the characteristics into the provided file, the
+	 * method expects the file pointer to be set on the characteristics token.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 */
+	protected function characteristicsWrite( SplFileObject $theFile )
+	{
+		//
+		// Write opening token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS, FALSE );
+
+		//
+		// Iterate characteristics.
+		//
+		foreach( $this->mChars as $char )
+		{
+			//
+			// Open element.
+			//
+			$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS_ELM, FALSE );
+
+			//
+			// Write element size.
+			//
+			$this->writeUInt64( $theFile, $char[ self::kOFFSET_CHARS_SIZE ] );
+
+			//
+			// Write variable name.
+			//
+			$this->writeCString( $theFile, 129, $char[ self::kOFFSET_CHARS_VARNAME ] );
+
+			//
+			// Write characteristic name.
+			//
+			$this->writeCString( $theFile, 129, $char[ self::kOFFSET_CHARS_NAME ] );
+
+			//
+			// Write characteristic data.
+			//
+			$this->writeCString(
+				$theFile,
+				$char[ self::kOFFSET_CHARS_SIZE ] - (129 * 2),
+				$char[ self::kOFFSET_CHARS_DATA ] );
+
+			//
+			// Close element.
+			//
+			$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS_ELM, TRUE );
+
+		} // Iterating characteristics.
+
+		//
+		// Write closing token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS, TRUE );
+
+	} // characteristicsWrite.
+
+
 
 /*=======================================================================================
  *																						*
@@ -2312,13 +3154,13 @@ class StataFile extends ArrayObject
 
 
 	/*===================================================================================
-	 *	readULong																		*
+	 *	readUInt32																		*
 	 *==================================================================================*/
 
 	/**
 	 * <h4>Read unsigned long.</h4>
 	 *
-	 * This method can be used to read an unsigned long.
+	 * This method can be used to read a 32 bit unsigned long.
 	 *
 	 * <em>Note that the method returns a signed integer, since PHP does not handle unsigned
 	 * integers.
@@ -2329,7 +3171,102 @@ class StataFile extends ArrayObject
 	 *
 	 * @uses ByteOrder()
 	 */
-	protected function readULong( SplFileObject $theFile )
+	protected function readUInt32( SplFileObject $theFile )
+	{
+		//
+		// Read value.
+		//
+		$data = $theFile->fread( 4 );
+		if( $data === FALSE )
+			throw new RuntimeException(
+				"Unable to read unsigned long." );								// !@! ==>
+
+		//
+		// Unpack.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				return unpack( 'N', $data )[ 1 ];									// ==>
+
+			case 'LSF':
+				return unpack( 'V', $data )[ 1 ];									// ==>
+		}
+
+		throw new RuntimeException(
+			"Invalid byte order [$tmp]." );										// !@! ==>
+
+	} // readUInt32.
+
+
+	/*===================================================================================
+	 *	writeUInt32																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write unsigned long.</h4>
+	 *
+	 * This method can be used to write a 32 bit unsigned long.
+	 *
+	 * <em>Note that the method expects a signed integer, since PHP does not handle unsigned
+	 * integers.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @param int					$theValue			Value to write.
+	 * @throws RuntimeException
+	 *
+	 * @uses ByteOrder()
+	 */
+	protected function writeUInt32( SplFileObject $theFile, int $theValue )
+	{
+		//
+		// Pack value.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				$value = pack( 'N', $theValue );
+				break;
+
+			case 'LSF':
+				$value = pack( 'V', $theValue );
+				break;
+
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );								// !@! ==>
+		}
+
+		//
+		// write value.
+		//
+		$ok = $theFile->fwrite( $value );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write unsigned long." );								// !@! ==>
+
+	} // writeUInt32.
+
+
+	/*===================================================================================
+	 *	readUInt64																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read unsigned long.</h4>
+	 *
+	 * This method can be used to read a 64 bit unsigned long.
+	 *
+	 * <em>Note that the method returns a signed integer, since PHP does not handle unsigned
+	 * integers.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return int					The signed integer.
+	 * @throws RuntimeException
+	 *
+	 * @uses ByteOrder()
+	 */
+	protected function readUInt64( SplFileObject $theFile )
 	{
 		//
 		// Read value.
@@ -2354,17 +3291,17 @@ class StataFile extends ArrayObject
 		throw new RuntimeException(
 			"Invalid byte order [$tmp]." );										// !@! ==>
 
-	} // readULong.
+	} // readUInt64.
 
 
 	/*===================================================================================
-	 *	writeULong																		*
+	 *	writeUInt64																		*
 	 *==================================================================================*/
 
 	/**
 	 * <h4>Write unsigned long.</h4>
 	 *
-	 * This method can be used to write an unsigned long.
+	 * This method can be used to write a 64 bit unsigned long.
 	 *
 	 * <em>Note that the method expects a signed integer, since PHP does not handle unsigned
 	 * integers.
@@ -2375,7 +3312,7 @@ class StataFile extends ArrayObject
 	 *
 	 * @uses ByteOrder()
 	 */
-	protected function writeULong( SplFileObject $theFile, int $theValue )
+	protected function writeUInt64( SplFileObject $theFile, int $theValue )
 	{
 		//
 		// Pack value.
@@ -2403,7 +3340,7 @@ class StataFile extends ArrayObject
 			throw new RuntimeException(
 				"Unable to write unsigned long." );								// !@! ==>
 
-	} // writeULong.
+	} // writeUInt64.
 
 
 	/*===================================================================================

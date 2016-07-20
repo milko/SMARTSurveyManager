@@ -60,6 +60,10 @@ echo( '$test->VariableSort( NULL, [ "CATEGORY" => 1, "INTEGER" => 2, "FLOAT" => 
 $test->VariableSort( NULL, [ "CATEGORY" => 1, "INTEGER" => 2, "FLOAT" => 3 ], TRUE );
 echo( '$test->VariableFormat( NULL, [ "INTEGER" => "%10.0g", "FLOAT" => "%10.0g", "STRING" => "%9s", "CATEGORY" => "%8.0g", "LONG_STRING" => "%-80s" ], TRUE );' . "\n" );
 $test->VariableFormat( NULL, [ "INTEGER" => "%10.0g", "FLOAT" => "%10.0g", "STRING" => "%9s", "CATEGORY" => "%8.0g", "LONG_STRING" => "%-80s" ], TRUE );
+echo( '$test->VariableLabel( NULL, [ "CATEGORY" => "Colors" ], TRUE );' . "\n" );
+$test->VariableEnumName( NULL, [ "CATEGORY" => "Colors" ], TRUE );
+echo( '$test->VariableLabel( NULL, [ "INTEGER" => "This is an integer", "FLOAT" => "This is a float", "STRING" => "This is a string", "CATEGORY" => "This is a controlled vocabulary", "LONG_STRING" => "This is a long string" ], TRUE );' . "\n" );
+$test->VariableLabel( NULL, [ "INTEGER" => "This is an integer", "FLOAT" => "This is a float", "STRING" => "This is a string", "CATEGORY" => "This is a controlled vocabulary", "LONG_STRING" => "This is a long string" ], TRUE );
 print_r( $test );
 
 echo( "\n" );
