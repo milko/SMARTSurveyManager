@@ -1113,16 +1113,16 @@
         },
         {
             "name": "nette/di",
-            "version": "v2.4.0",
+            "version": "v2.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/di.git",
-                "reference": "6ba187598e40c8596eb830e25e0696f02a97868d"
+                "reference": "beff1de5c216757fee64a93511408361d9b6365e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nette/di/zipball/6ba187598e40c8596eb830e25e0696f02a97868d",
-                "reference": "6ba187598e40c8596eb830e25e0696f02a97868d",
+                "url": "https://api.github.com/repos/nette/di/zipball/beff1de5c216757fee64a93511408361d9b6365e",
+                "reference": "beff1de5c216757fee64a93511408361d9b6365e",
                 "shasum": ""
             },
             "require": {
@@ -1168,7 +1168,7 @@
             ],
             "description": "Nette Dependency Injection Component",
             "homepage": "https://nette.org",
-            "time": "2016-06-27 18:13:23"
+            "time": "2016-07-07 14:26:22"
         },
         {
             "name": "nette/finder",
