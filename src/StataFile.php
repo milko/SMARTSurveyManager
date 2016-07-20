@@ -1009,7 +1009,7 @@ class StataFile extends ArrayObject
 				"Invalid variable index [$theVariable]." );						// !@! ==>
 		$theVariable = (int)$theVariable;
 		if( ($theVariable < 0)
-			|| ($theVariable > $this->VariablesCount()) )
+		 || ($theVariable > $this->VariablesCount()) )
 			throw new InvalidArgumentException(
 				"Invalid variable index [$theVariable]." );						// !@! ==>
 
@@ -1017,17 +1017,7 @@ class StataFile extends ArrayObject
 		// Return current value.
 		//
 		if( $theValue === NULL )
-		{
-			//
-			// Check variable index.
-			//
-			if( $theVariable >= count( $this->mDict ) )
-				throw new InvalidArgumentException(
-					"Invalid variable index [$theVariable]." );					// !@! ==>
-
 			return $this->mDict[ $theVariable ][ self::kOFFSET_NAME ];				// ==>
-
-		} // Return current value.
 
 		return
 			$this->mDict[ $theVariable ][ self::kOFFSET_NAME ]
@@ -1174,6 +1164,120 @@ class StataFile extends ArrayObject
 	} // VariableSort.
 
 
+	/*===================================================================================
+	 *	VariableFormat																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Set or retrieve the dataset variable format(s).</h4>
+	 *
+	 * This method can be used to set or retrieve the dataset variable format(s), the method
+	 * expects the following parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theVariable</b>: Variable index or <tt>NULL</tt> for all variables.
+	 * 	<li><b>$theValue</b>: The new variable format, list or operation:
+	 * 	 <ul>
+	 * 		<li><tt>NULL</tt>: Return the current value.
+	 * 		<li><tt>string</tt>: Set the new value related to the provided variable index.
+	 * 		<li><tt>array</tt>: Set all values; <em>it is assumed the full list was
+	 * 			provided</em>.
+	 * 	 </ul>
+	 * 	<li><b>$asName</b>: If <tt>TRUE</tt> it is assumed the variable is provided by name,
+	 * 		if not, it is assumed the variable(s) are provided as the variable index (int).
+	 * </ul>
+	 *
+	 * @param int					$theVariable		Variable index or <tt>NULL</tt>.
+	 * @param mixed					$theValue			New value, or operation.
+	 * @param bool					$asName				<tt>TRUE</tt> variable name(s).
+	 * @return mixed				Variable format or all formats.
+	 * @throws InvalidArgumentException
+	 */
+	public function VariableFormat(		 $theVariable = NULL,
+										 $theValue = NULL,
+									bool $asName = FALSE )
+	{
+		//
+		// Set all formats.
+		//
+		if( is_array( $theValue ) )
+		{
+			//
+			// Iterate names.
+			//
+			foreach( $theValue as $key => $value )
+				$list[ $key ]
+					= $this->VariableFormat( $key, $value, $asName );
+
+			return $theValue;														// ==>
+
+		} // Set all formats.
+
+		//
+		// Get all formats.
+		//
+		if( ($theValue === NULL)
+		 && ($theVariable === NULL) )
+		{
+			//
+			// Iterate data dictionary.
+			//
+			$list = [];
+			foreach( array_keys( $this->mDict ) as $key )
+			{
+				//
+				// Handle names.
+				//
+				if( $asName )
+					$list[ $this->mDict[ $key ][ self::kOFFSET_NAME ] ]
+						= $this->mDict[ $key ][ self::kOFFSET_FORMAT ];
+
+				//
+				// Handle indexes.
+				//
+				else
+					$list[ $key ]
+						= $this->mDict[ $key ][ self::kOFFSET_FORMAT ];
+
+			} // Iterating data dictionary.
+
+			return $list;															// ==>
+
+		} // Get all formats.
+
+		//
+		// Convert variable name to index.
+		//
+		if( ! is_int( $theVariable ) )
+		{
+			$tmp = $this->parseName( $theVariable );
+			if( $tmp === NULL )
+				throw new InvalidArgumentException(
+					"Unknown variable name [$theVariable]." );					// !@! ==>
+			$theVariable = (int)$tmp;
+		}
+
+		//
+		// Check variable index.
+		//
+		if( ($theVariable < 0)
+		 || ($theVariable > $this->VariablesCount()) )
+			throw new InvalidArgumentException(
+				"Invalid variable index [$theVariable]." );						// !@! ==>
+
+		//
+		// Return current value.
+		//
+		if( $theValue === NULL )
+			return $this->mDict[ $theVariable ][ self::kOFFSET_FORMAT ];			// ==>
+
+		return
+			$this->mDict[ $theVariable ][ self::kOFFSET_FORMAT ]
+				= mb_substr( (string)$theValue, 0, 56, '8bit' );					// ==>
+
+	} // VariableFormat.
+
+
 
 /*=======================================================================================
  *																						*
@@ -1226,6 +1330,8 @@ class StataFile extends ArrayObject
 		$this->mapRead( $file );
 		$this->typesRead( $file );
 		$this->namesRead( $file );
+		$this->sortRead( $file );
+		$this->formatRead( $file );
 
 		return $file;																// ==>
 
@@ -1292,6 +1398,12 @@ class StataFile extends ArrayObject
 		//
 		$this->sortWrite( $file );
 		$this->mMap[ self::kTOKEN_DATASET_FORMATS ] = $file->ftell();
+
+		//
+		// Write formats.
+		//
+		$this->formatWrite( $file );
+		$this->mMap[ self::kTOKEN_DATASET_VALABNAMES ] = $file->ftell();
 
 		return $file;																// ==>
 
@@ -1839,10 +1951,11 @@ class StataFile extends ArrayObject
 		$this->readToken( $theFile, self::kTOKEN_DATASET_SORT, FALSE );
 
 		//
-		// Get sort order.
+		// Iterate sort order.
 		//
 		$order = 1;
-		do
+		$count = $this->VariablesCount();
+		while( $count-- )
 		{
 			//
 			// Get order.
@@ -1851,7 +1964,24 @@ class StataFile extends ArrayObject
 			if( $variable )
 				$this->VariableSort( $variable - 1, $order++, FALSE );
 
-		} while( $variable );
+			//
+			// End of sort list.
+			//
+			else
+				break;														// =>
+
+		} // Scanning sort order.
+
+		//
+		// Read remaining elements.
+		//
+		while( $count-- )
+			$this->readUShort( $theFile );
+
+		//
+		// Read closing element.
+		//
+		$this->readUShort( $theFile );
 
 		//
 		// Get closing token.
@@ -1897,6 +2027,13 @@ class StataFile extends ArrayObject
 			$this->writeUShort( $theFile, $variable + 1 );
 
 		//
+		// Write remaining and closing elements.
+		//
+		$count = count( $this->mDict ) - count( $list );
+		while( $count-- )
+			$this->writeUShort( $theFile, 0 );
+
+		//
 		// Close list.
 		//
 		$this->writeUShort( $theFile, 0 );
@@ -1907,6 +2044,74 @@ class StataFile extends ArrayObject
 		$this->writeToken( $theFile, self::kTOKEN_DATASET_SORT, TRUE );
 
 	} // sortWrite.
+
+
+	/*===================================================================================
+	 *	formatRead																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read the data format.</h4>
+	 *
+	 * This method can be used to read the data format from the provided file, the method
+	 * expects the file pointer to be set on the format file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 */
+	protected function formatRead( SplFileObject $theFile )
+	{
+		//
+		// Get opening token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_FORMATS, FALSE );
+
+		//
+		// Iterate formats.
+		//
+		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
+			$this->VariableFormat( $variable, $this->readCString( $theFile, 57 ), FALSE );
+
+		//
+		// Get closing token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_FORMATS, TRUE );
+
+	} // formatRead.
+
+
+	/*===================================================================================
+	 *	formatWrite																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write the data formats.</h4>
+	 *
+	 * This method can be used to write the data formats into the provided file, the
+	 * method expects the file pointer to be set on the data formats token.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 */
+	protected function formatWrite( SplFileObject $theFile )
+	{
+		//
+		// Write opening token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_FORMATS, FALSE );
+
+		//
+		// Iterate formats.
+		//
+		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
+			$this->writeCString(
+				$theFile, 57, $this->mDict[ $variable ][ self::kOFFSET_FORMAT ]
+			);
+
+		//
+		// Write closing token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_FORMATS, TRUE );
+
+	} // formatWrite.
 
 
 

@@ -58,6 +58,8 @@ echo( '$test->VariableName( NULL, [ "INTEGER", "FLOAT", "STRING", "CATEGORY", "L
 $test->VariableName( NULL, [ "INTEGER", "FLOAT", "STRING", "CATEGORY", "LONG_STRING" ] );
 echo( '$test->VariableSort( NULL, [ "CATEGORY" => 1, "INTEGER" => 2, "FLOAT" => 3 ], TRUE );' . "\n" );
 $test->VariableSort( NULL, [ "CATEGORY" => 1, "INTEGER" => 2, "FLOAT" => 3 ], TRUE );
+echo( '$test->VariableFormat( NULL, [ "INTEGER" => "%10.0g", "FLOAT" => "%10.0g", "STRING" => "%9s", "CATEGORY" => "%8.0g", "LONG_STRING" => "%-80s" ], TRUE );' . "\n" );
+$test->VariableFormat( NULL, [ "INTEGER" => "%10.0g", "FLOAT" => "%10.0g", "STRING" => "%9s", "CATEGORY" => "%8.0g", "LONG_STRING" => "%-80s" ], TRUE );
 print_r( $test );
 
 echo( "\n" );
