@@ -1523,8 +1523,8 @@ class StataFile extends ArrayObject
 	 * @throws InvalidArgumentException
 	 */
 	public function VariableEnumName(	   $theVariable = NULL,
-											$theValue = NULL,
-											bool $asName = FALSE )
+										   $theValue = NULL,
+									  bool $asName = FALSE )
 	{
 		//
 		// Set all names.
@@ -1669,14 +1669,14 @@ class StataFile extends ArrayObject
 	 * @throws InvalidArgumentException
 	 */
 	public function VariableEnumVals(	   $theVariable = NULL,
-										   $theValue = NULL,
-									  bool $asName = FALSE )
+											$theValue = NULL,
+											bool $asName = FALSE )
 	{
 		//
 		// Get all names.
 		//
 		if( ($theValue === NULL)
-		 && ($theVariable === NULL) )
+			&& ($theVariable === NULL) )
 		{
 			//
 			// Iterate data dictionary.
@@ -1695,8 +1695,8 @@ class StataFile extends ArrayObject
 					if( $asName )
 						$list[ $this->mDict[ $key ][ self::kOFFSET_NAME ] ]
 							= $this->mDict[ $key ]
-										  [ self::kOFFSET_ENUM ]
-										  [ self::kOFFSET_ENUM_ELMS ];
+						[ self::kOFFSET_ENUM ]
+						[ self::kOFFSET_ENUM_ELMS ];
 
 					//
 					// Handle indexes.
@@ -1704,8 +1704,8 @@ class StataFile extends ArrayObject
 					else
 						$list[ $key ]
 							= $this->mDict[ $key ]
-										  [ self::kOFFSET_ENUM ]
-										  [ self::kOFFSET_ENUM_ELMS ];
+						[ self::kOFFSET_ENUM ]
+						[ self::kOFFSET_ENUM_ELMS ];
 
 				} // Has enumeration values.
 
@@ -1731,7 +1731,7 @@ class StataFile extends ArrayObject
 		// Check variable index.
 		//
 		if( ($theVariable < 0)
-		 || ($theVariable > $this->VariablesCount()) )
+			|| ($theVariable > $this->VariablesCount()) )
 			throw new InvalidArgumentException(
 				"Invalid variable index [$theVariable]." );						// !@! ==>
 
@@ -1745,8 +1745,8 @@ class StataFile extends ArrayObject
 			//
 			if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
 				return $this->mDict[ $theVariable ]
-								   [ self::kOFFSET_ENUM ]
-								   [ self::kOFFSET_ENUM_ELMS ];						// ==>
+				[ self::kOFFSET_ENUM ]
+				[ self::kOFFSET_ENUM_ELMS ];						// ==>
 
 			return NULL;															// ==>
 
@@ -1767,11 +1767,137 @@ class StataFile extends ArrayObject
 
 		return
 			$this->mDict[ $theVariable ]
-						[ self::kOFFSET_ENUM ]
-						[ self::kOFFSET_ENUM_ELMS ]
+			[ self::kOFFSET_ENUM ]
+			[ self::kOFFSET_ENUM_ELMS ]
 				= $theValue;														// ==>
 
 	} // VariableEnumVals.
+
+
+	/*===================================================================================
+	 *	Note																			*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Manage notes.</h4>
+	 *
+	 * This method can be used to append or retrieve notes, the method expects the following
+	 * parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theNote</b>: Note string or operation:
+	 * 	 <ul>
+	 * 		<li><tt>NULL</tt>: Return notes related to next parameter.
+	 * 		<li><tt>string</tt>: Append note related to next parameter.
+	 * 	 </ul>
+	 * 	<li><b>$theVariable</b>: Variable name:
+	 * 	 <ul>
+	 * 		<li><tt>NULL</tt>: Dataset notes.
+	 * 		<li><tt>string</tt>: Variable name.
+	 * 	 </ul>
+	 * </ul>
+	 *
+	 * The method will return an array of notes, or an empty array if there are no notes
+	 * for the provided variable.
+	 *
+	 * @param string				$theNote			Note or operation.
+	 * @param string				$theVariable		Variable name or <tt>NULL</tt>.
+	 */
+	public function Note( string $theNote = NULL, string $theVariable = NULL )
+	{
+		//
+		// Init local storage.
+		//
+		$notes = [];
+		$variable = ( $theVariable === NULL )
+				  ? '_dta'
+				  : $theVariable;
+
+		//
+		// Locate index.
+		//
+		$index = NULL;
+		foreach( $this->mChars as $key => $value )
+		{
+			if( ($value[ self::kOFFSET_CHARS_VARNAME ] == $variable)
+			 && ($value[ self::kOFFSET_CHARS_NAME ] == 'note0') )
+			{
+				$index = $key;
+				break;															// =>
+			}
+		}
+
+		//
+		// Return note.
+		//
+		if( $theNote === NULL )
+		{
+			//
+			// Handle no notes.
+			//
+			if( $index === NULL )
+				return $notes;														// ==>
+
+			//
+			// Collect notes.
+			//
+			foreach( $this->mChars as $value )
+			{
+				if( ($value[ self::kOFFSET_CHARS_VARNAME ] == $variable)
+				 && ($value[ self::kOFFSET_CHARS_NAME ] != 'note0') )
+					$notes[ (int)substr( $value[ self::kOFFSET_CHARS_NAME ], 4 ) ]
+						= $value[ self::kOFFSET_CHARS_DATA ];
+			}
+
+			//
+			// Sort notes.
+			//
+			ksort( $notes );
+
+			return array_values( $notes );											// ==>
+
+		} // Return note.
+
+		//
+		// Create index.
+		//
+		if( $index === NULL )
+		{
+			$index = count( $this->mChars );
+			$this->mChars[ $index ] = [
+				self::kOFFSET_CHARS_VARNAME => $variable,
+				self::kOFFSET_CHARS_NAME => 'note0',
+				self::kOFFSET_CHARS_DATA => '0',
+				self::kOFFSET_CHARS_SIZE => (129 * 2) + 1 + 1
+			];
+
+		} // New variable.
+
+		//
+		// Update index.
+		//
+		$count = (int)$this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ];
+		$this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ] = (int)( $count + 1 );
+		$this->mChars[ $index ][ self::kOFFSET_CHARS_SIZE ]
+			= (129 * 2)
+			+ mb_strlen( $this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ], '8bit' )
+			+ 1;
+
+		//
+		// Add note.
+		//
+		$note = [];
+		$note[ self::kOFFSET_CHARS_VARNAME ] = $variable;
+		$note[ self::kOFFSET_CHARS_NAME ]
+			= "note" . $this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ];
+		$note[ self::kOFFSET_CHARS_DATA ] = $this->truncateString( $theNote, 67783 );
+		$note[ self::kOFFSET_CHARS_SIZE ]
+			= (129 * 2) + mb_strlen( $note[ self::kOFFSET_CHARS_DATA ], '8bit' );
+		$this->mChars[] = $note;
+
+		return $this->Note( NULL, $theVariable );									// ==>
+
+	} // Note.
 
 
 
@@ -2921,7 +3047,7 @@ class StataFile extends ArrayObject
 			//
 			// Write element size.
 			//
-			$this->writeUInt64( $theFile, $char[ self::kOFFSET_CHARS_SIZE ] );
+			$this->writeUInt32( $theFile, $char[ self::kOFFSET_CHARS_SIZE ] );
 
 			//
 			// Write variable name.
@@ -2938,7 +3064,7 @@ class StataFile extends ArrayObject
 			//
 			$this->writeCString(
 				$theFile,
-				$char[ self::kOFFSET_CHARS_SIZE ] - (129 * 2),
+				mb_strlen( $char[ self::kOFFSET_CHARS_DATA ] ) + 1,
 				$char[ self::kOFFSET_CHARS_DATA ] );
 
 			//
@@ -3496,15 +3622,13 @@ class StataFile extends ArrayObject
 	 * @uses readUShort()
 	 */
 	protected function writeCString( SplFileObject $theFile,
-									 int $theLength,
-									 string $theValue )
+									 int		   $theLength,
+									 string		   $theValue )
 	{
 		//
 		// Truncate string.
 		//
-		$chars = mb_strlen( $theValue, 'UTF-8' );
-		while( mb_strlen( $theValue, '8bit' ) > $theLength )
-			$theValue = mb_substr( $theValue, 0, --$chars, 'UTF-8' );
+		$theValue = $this->truncateString( $theValue, $theLength );
 
 		//
 		// Write string.
@@ -3719,7 +3843,7 @@ class StataFile extends ArrayObject
 				case 65527:
 					return "float";													// ==>
 
-				case 32768:
+				case 65528:
 					return "long";													// ==>
 
 				case 65529:
@@ -3877,6 +4001,94 @@ class StataFile extends ArrayObject
 		return NULL;																// ==>
 
 	} // parseName.
+
+
+	/*===================================================================================
+	 *	truncateString																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Truncate a string.</h4>
+	 *
+	 * This method can be used to truncate a UTF-8 string to a maximum byte length, the
+	 * method expects the string and the maximum length in bytes and will return the
+	 * truncated string.
+	 *
+	 * @param string				$theString			String.
+	 * @param int					$theLength			Maximum length in bytes.
+	 * @return string				Truncated string.
+	 */
+	protected function truncateString( string $theString, int $theLength )
+	{
+		//
+		// Truncate string.
+		//
+		$chars = mb_strlen( $theString, 'UTF-8' );
+		while( mb_strlen( $theString, '8bit' ) > $theLength )
+			$theString = mb_substr( $theString, 0, --$chars, 'UTF-8' );
+
+		return $theString;															// ==>
+
+	} // truncateString.
+
+
+	/*===================================================================================
+	 *	addCharacteristic																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Add a characteristics record.</h4>
+	 *
+	 * This method can be used to append a characteristics record, the method expects the
+	 * following parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theVariable</b>: Variable name.
+	 * 	<li><b>$theName</b>: Characteristics name.
+	 * 	<li><b>$theData</b>: Characteristics data.
+	 * 	<li><b>$theSize</b>: Record size, or <tt>NULL</tt> to calculate.
+	 * </ul>
+	 *
+	 * @param string				$theVariable		Variable name.
+	 * @param string				$theName			Characteristics name.
+	 * @param string				$theData			Characteristics data.
+	 * @param int					$theSize			Characteristics size.
+	 */
+	protected function addCharacteristic( string $theVariable,
+										  string $theName,
+										  string $theData,
+										  int	 $theSize = NULL )
+	{
+		//
+		// Init local storage.
+		//
+		$record = [];
+
+		//
+		// Set names.
+		//
+		$record[ self::kOFFSET_CHARS_VARNAME ] = $this->truncateString( $theVariable, 128 );
+		$record[ self::kOFFSET_CHARS_NAME ] = $this->truncateString( $theName, 128 );
+
+		//
+		// Set data.
+		//
+		$record[ self::kOFFSET_CHARS_DATA ]
+			= $this->truncateString( $theData, 67784 - (129 * 2) - 1 );
+
+		//
+		// Set length.
+		//
+		if( $theSize === NULL )
+			$theSize = (129 * 2) + mb_strlen( $theData, '8bit' ) + 1;
+		$record[ self::kOFFSET_CHARS_SIZE ] = $theSize;
+
+		//
+		// Add record.
+		//
+		$this->mChars[] = $record;
+
+	} // addCharacteristic.
 
 
 

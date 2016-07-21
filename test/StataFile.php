@@ -30,8 +30,8 @@ echo( "\n=======================================================================
 //
 // Read file.
 //
-echo( '$result = $test->Read( kPATH_LIBRARY_ROOT . "test/Read1.dta" );' . "\n" );
-$result = $test->Read( kPATH_LIBRARY_ROOT . "test/Read1.dta" );
+echo( '$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );' . "\n" );
+$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );
 var_dump( $result->getRealPath() );
 print_r( $test );
 
@@ -46,24 +46,45 @@ echo( '$test->Format( "118" );' . "\n" );
 $test->Format( "118" );
 echo( '$test->ByteOrder( "LSF" );' . "\n" );
 $test->ByteOrder( "LSF" );
-echo( '$test->VariablesCount( 5 );' . "\n" );
-$test->VariablesCount( 5 );
-echo( '$test->ObservationsCount( 3 );' . "\n" );
-$test->ObservationsCount( 3 );
+echo( '$test->VariablesCount( 9 );' . "\n" );
+$test->VariablesCount( 9 );
+echo( '$test->ObservationsCount( 4 );' . "\n" );
+$test->ObservationsCount( 4 );
 echo( '$test->DatasetLabel( "Test dataset" );' . "\n" );
 $test->DatasetLabel( "Test dataset" );
-echo( '$test->VariableType( NULL, [ "int", "double", "str9", "int", "strL" ], TRUE );' . "\n" );
-$test->VariableType( NULL, [ "int", "double", "str9", "int", "strL" ], TRUE );
-echo( '$test->VariableName( NULL, [ "INTEGER", "FLOAT", "STRING", "CATEGORY", "LONG_STRING" ] );' . "\n" );
-$test->VariableName( NULL, [ "INTEGER", "FLOAT", "STRING", "CATEGORY", "LONG_STRING" ] );
-echo( '$test->VariableSort( NULL, [ "CATEGORY" => 1, "INTEGER" => 2, "FLOAT" => 3 ], TRUE );' . "\n" );
-$test->VariableSort( NULL, [ "CATEGORY" => 1, "INTEGER" => 2, "FLOAT" => 3 ], TRUE );
-echo( '$test->VariableFormat( NULL, [ "INTEGER" => "%10.0g", "FLOAT" => "%10.0g", "STRING" => "%9s", "CATEGORY" => "%8.0g", "LONG_STRING" => "%-80s" ], TRUE );' . "\n" );
-$test->VariableFormat( NULL, [ "INTEGER" => "%10.0g", "FLOAT" => "%10.0g", "STRING" => "%9s", "CATEGORY" => "%8.0g", "LONG_STRING" => "%-80s" ], TRUE );
-echo( '$test->VariableLabel( NULL, [ "CATEGORY" => "Colors" ], TRUE );' . "\n" );
-$test->VariableEnumName( NULL, [ "CATEGORY" => "Colors" ], TRUE );
-echo( '$test->VariableLabel( NULL, [ "INTEGER" => "This is an integer", "FLOAT" => "This is a float", "STRING" => "This is a string", "CATEGORY" => "This is a controlled vocabulary", "LONG_STRING" => "This is a long string" ], TRUE );' . "\n" );
-$test->VariableLabel( NULL, [ "INTEGER" => "This is an integer", "FLOAT" => "This is a float", "STRING" => "This is a string", "CATEGORY" => "This is a controlled vocabulary", "LONG_STRING" => "This is a long string" ], TRUE );
+echo( '$test->VariableType( NULL, [ "byte", "int", "long", "float", "double", "str9", "int", "int", "strL" ], TRUE );' . "\n" );
+$test->VariableType( NULL, [ "byte", "int", "long", "float", "double", "str9", "int", "int", "strL" ], TRUE );
+echo( '$test->VariableName( NULL, [ "BYTE", "INTEGER", "LONG", "FLOAT", "DOUBLE", "STRING", "COLOR", "PLACE", "LONG_STRING" ] );' . "\n" );
+$test->VariableName( NULL, [ "BYTE", "INTEGER", "LONG", "FLOAT", "DOUBLE", "STRING", "COLOR", "PLACE", "LONG_STRING" ] );
+echo( '$test->VariableSort( NULL, [ "STRING" => 1, "LONG" => 2, "PLACE" => 3 ], TRUE );' . "\n" );
+$test->VariableSort( NULL, [ "STRING" => 1, "LONG" => 2, "PLACE" => 3 ], TRUE );
+echo( '$test->VariableFormat( NULL, [ "BYTE" => "%8.0g", "INTEGER" => "%8.0g", "LONG" => "%12.0g", "FLOAT" => "%9.0g", "DOUBLE" => "%10.0g", "STRING" => "%9s", "COLOR" => "%8.0g", "PLACE" => "%8.0g", "LONG_STRING" => "%-40s" ], TRUE );' . "\n" );
+$test->VariableFormat( NULL, [ "BYTE" => "%8.0g", "INTEGER" => "%8.0g", "LONG" => "%12.0g", "FLOAT" => "%9.0g", "DOUBLE" => "%10.0g", "STRING" => "%9s", "COLOR" => "%8.0g", "PLACE" => "%8.0g", "LONG_STRING" => "%-40s" ], TRUE );
+echo( '$test->VariableEnumName( NULL, [ "COLOR" => "Colors", "PLACE" => "Cardinal" ], TRUE );' . "\n" );
+$test->VariableEnumName( NULL, [ "COLOR" => "Colors", "PLACE" => "Cardinal" ], TRUE );
+echo( '$test->VariableLabel( NULL, [ "BYTE" => "Byte", "INTEGER" => "32 bit integer", "LONG" => "64 bit integer", "FLOAT" => "32 bit float", "DOUBLE" => "64 bit float", "STRING" => "Fixed length string", "COLOR" => "Colours enumeration", "PLACE" => "Directions enumeration", "LONG_STRING" => "Long string" ], TRUE );' . "\n" );
+$test->VariableLabel( NULL, [ "BYTE" => "Byte", "INTEGER" => "32 bit integer", "LONG" => "64 bit integer", "FLOAT" => "32 bit float", "DOUBLE" => "64 bit float", "STRING" => "Fixed length string", "COLOR" => "Colours enumeration", "PLACE" => "Directions enumeration", "LONG_STRING" => "Long string" ], TRUE );
+echo( '$result = $test->Note( "Dataset note 1" );' . "\n" );
+$result = $test->Note( "Dataset note 1" );
+print_r( $result );
+echo( '$result = $test->Note( "Dataset note 2" );' . "\n" );
+$result = $test->Note( "Dataset note 2" );
+print_r( $result );
+echo( '$result = $test->Note( "Dataset note 3" );' . "\n" );
+$result = $test->Note( "Dataset note 3" );
+print_r( $result );
+echo( '$result = $test->Note( "BYTE note 1", "BYTE" );' . "\n" );
+$result = $test->Note( "BYTE note 1", "BYTE" );
+print_r( $result );
+echo( '$result = $test->Note( "BYTE note 2", "BYTE" );' . "\n" );
+$result = $test->Note( "BYTE note 2", "BYTE" );
+print_r( $result );
+echo( '$result = $test->Note( "BYTE note 1", "BYTE" );' . "\n" );
+$result = $test->Note( "COLOR note 1", "COLOR" );
+print_r( $result );
+echo( '$result = $test->Note( "COLOR note 2", "COLOR" );' . "\n" );
+$result = $test->Note( "COLOR note 2", "COLOR" );
+print_r( $result );
 print_r( $test );
 
 echo( "\n" );
@@ -71,8 +92,8 @@ echo( "\n" );
 //
 // Write file.
 //
-echo( '$result = $test->Write( kPATH_LIBRARY_ROOT . "test/Write1.dta" );' . "\n" );
-$result = $test->Write( kPATH_LIBRARY_ROOT . "test/Write1.dta" );
+echo( '$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );' . "\n" );
+$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );
 var_dump( $result->getRealPath() );
 print_r( $test );
 
