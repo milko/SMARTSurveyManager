@@ -60,8 +60,8 @@ echo( '$test->VariableSort( NULL, [ "STRING" => 1, "LONG" => 2, "PLACE" => 3 ], 
 $test->VariableSort( NULL, [ "STRING" => 1, "LONG" => 2, "PLACE" => 3 ], TRUE );
 echo( '$test->VariableFormat( NULL, [ "BYTE" => "%8.0g", "INTEGER" => "%8.0g", "LONG" => "%12.0g", "FLOAT" => "%9.0g", "DOUBLE" => "%10.0g", "STRING" => "%9s", "COLOR" => "%8.0g", "PLACE" => "%8.0g", "LONG_STRING" => "%-40s" ], TRUE );' . "\n" );
 $test->VariableFormat( NULL, [ "BYTE" => "%8.0g", "INTEGER" => "%8.0g", "LONG" => "%12.0g", "FLOAT" => "%9.0g", "DOUBLE" => "%10.0g", "STRING" => "%9s", "COLOR" => "%8.0g", "PLACE" => "%8.0g", "LONG_STRING" => "%-40s" ], TRUE );
-echo( '$test->VariableEnumName( NULL, [ "COLOR" => "Colors", "PLACE" => "Cardinal" ], TRUE );' . "\n" );
-$test->VariableEnumName( NULL, [ "COLOR" => "Colors", "PLACE" => "Cardinal" ], TRUE );
+echo( '$test->VariableEnumeration( NULL, [ "COLOR" => "Colors", "PLACE" => "Cardinal" ], TRUE );' . "\n" );
+$test->VariableEnumeration( NULL, [ "COLOR" => "Colors", "PLACE" => "Cardinal" ], TRUE );
 echo( '$test->VariableLabel( NULL, [ "BYTE" => "Byte", "INTEGER" => "32 bit integer", "LONG" => "64 bit integer", "FLOAT" => "32 bit float", "DOUBLE" => "64 bit float", "STRING" => "Fixed length string", "COLOR" => "Colours enumeration", "PLACE" => "Directions enumeration", "LONG_STRING" => "Long string" ], TRUE );' . "\n" );
 $test->VariableLabel( NULL, [ "BYTE" => "Byte", "INTEGER" => "32 bit integer", "LONG" => "64 bit integer", "FLOAT" => "32 bit float", "DOUBLE" => "64 bit float", "STRING" => "Fixed length string", "COLOR" => "Colours enumeration", "PLACE" => "Directions enumeration", "LONG_STRING" => "Long string" ], TRUE );
 echo( '$result = $test->Note( "Dataset note 1" );' . "\n" );

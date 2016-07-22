@@ -19,8 +19,7 @@
  * data file.
  *
  * The class implements a structure that will be populated with the elements contained in
- * the Stata file, data will be held in the inherited ArrayObject array and other elements
- * in data members.
+ * the Stata file.
  *
  *	@package	Stata
  *
@@ -28,7 +27,7 @@
  *	@version	1.00
  *	@since		07/07/2016
  */
-class StataFile extends ArrayObject
+class StataFile
 {
 	/**
 	 * <h4>Opening marker.</h4>
@@ -276,37 +275,11 @@ class StataFile extends ArrayObject
 	/**
 	 * <h4>Variable enumeration offset.</h4>
 	 *
-	 * This constant holds the <em>variable enumeration offset</em> in the data dictionary,
-	 * this element contains an array structured as following:
-	 *
-	 * <ul>
-	 * 	<li><tt>{@link kOFFSET_ENUM_NAME}</tt>: The controlled vocabulary name.
-	 * 	<li><tt>{@link kOFFSET_ENUM_ELMS}</tt>: The controlled vocabulary elements.
-	 * </ul>
+	 * This constant holds the <em>variable enumeration offset</em> in the data dictionary.
 	 *
 	 * @var string
 	 */
 	const kOFFSET_ENUM = 'enum';
-
-	/**
-	 * <h4>Controlled vocabulary name offset.</h4>
-	 *
-	 * This constant holds the <em>comtrolled vocabulary name offset</em> in the data
-	 * dictionary.
-	 *
-	 * @var string
-	 */
-	const kOFFSET_ENUM_NAME = 'name';
-
-	/**
-	 * <h4>Controlled vocabulary elements offset.</h4>
-	 *
-	 * This constant holds the <em>comtrolled vocabulary elements offset</em> in the data
-	 * dictionary.
-	 *
-	 * @var string
-	 */
-	const kOFFSET_ENUM_ELMS = 'elms';
 
 	/**
 	 * <h4>Variable characteristics size offset.</h4>
@@ -451,6 +424,25 @@ class StataFile extends ArrayObject
 	protected $mDict = [];
 
 	/**
+	 * <h4>Enumerations.</h4>
+	 *
+	 * This data member holds the <em>enumerations</em>, it is an array structured as
+	 * follows:
+	 *
+	 * <ul>
+	 * 	<li><i>index</i>: The enumeration name.
+	 * 	<li><i>value</i>: An array structured as follows:
+	 * 	 <ul>
+	 * 		<li><i>index</i>: The enumeration key (integer).
+	 * 		<li><i>value</i>: The enumeration value.
+	 * 	 </ul>
+	 * </ul>
+	 *
+	 * @var array
+	 */
+	protected $mEnum = [];
+
+	/**
 	 * <h4>Characteristics.</h4>
 	 *
 	 * This data member holds the <em>characteristics</em>, it is an array of arrays
@@ -466,6 +458,31 @@ class StataFile extends ArrayObject
 	 * @var array
 	 */
 	protected $mChars = [];
+
+	/**
+	 * <h4>Strings.</h4>
+	 *
+	 * This data member holds the <em>long strings</em>, it is an array structured as
+	 * follows:
+	 *
+	 * <ul>
+	 * 	<li><i>index</i>: The MD5 hash of the string.
+	 * 	<li><i>value</i>: The string.
+	 * </ul>
+	 *
+	 * @var array
+	 */
+	protected $mStrings = [];
+
+	/**
+	 * <h4>Data.</h4>
+	 *
+	 * This data member holds the dataset <em>data</em>, it is an associative array holding
+	 * the variable names and values.
+	 *
+	 * @var array
+	 */
+	protected $mData = [];
 
 
 
@@ -1494,7 +1511,7 @@ class StataFile extends ArrayObject
 
 
 	/*===================================================================================
-	 *	VariableEnumName																*
+	 *	VariableEnumeration																*
 	 *==================================================================================*/
 
 	/**
@@ -1522,9 +1539,9 @@ class StataFile extends ArrayObject
 	 * @return mixed				Enumeration name or all enumeration names.
 	 * @throws InvalidArgumentException
 	 */
-	public function VariableEnumName(	   $theVariable = NULL,
-										   $theValue = NULL,
-									  bool $asName = FALSE )
+	public function VariableEnumeration(	  $theVariable = NULL,
+											  $theValue = NULL,
+										 bool $asName = FALSE )
 	{
 		//
 		// Set all names.
@@ -1536,7 +1553,7 @@ class StataFile extends ArrayObject
 			//
 			foreach( $theValue as $key => $value )
 				$list[ $key ]
-					= $this->VariableEnumName( $key, $value, $asName );
+					= $this->VariableEnumeration( $key, $value, $asName );
 
 			return $theValue;														// ==>
 
@@ -1546,7 +1563,7 @@ class StataFile extends ArrayObject
 		// Get all names.
 		//
 		if( ($theValue === NULL)
-			&& ($theVariable === NULL) )
+		 && ($theVariable === NULL) )
 		{
 			//
 			// Iterate data dictionary.
@@ -1564,18 +1581,14 @@ class StataFile extends ArrayObject
 					//
 					if( $asName )
 						$list[ $this->mDict[ $key ][ self::kOFFSET_NAME ] ]
-							= $this->mDict[ $key ]
-										  [ self::kOFFSET_ENUM ]
-										  [ self::kOFFSET_ENUM_NAME ];
+							= $this->mDict[ $key ][ self::kOFFSET_ENUM ];
 
 					//
 					// Handle indexes.
 					//
 					else
 						$list[ $key ]
-							= $this->mDict[ $key ]
-										  [ self::kOFFSET_ENUM ]
-										  [ self::kOFFSET_ENUM_NAME ];
+							= $this->mDict[ $key ][ self::kOFFSET_ENUM ];
 
 				} // Has enumeration name.
 
@@ -1601,7 +1614,7 @@ class StataFile extends ArrayObject
 		// Check variable index.
 		//
 		if( ($theVariable < 0)
-			|| ($theVariable > $this->VariablesCount()) )
+		 || ($theVariable > $this->VariablesCount()) )
 			throw new InvalidArgumentException(
 				"Invalid variable index [$theVariable]." );						// !@! ==>
 
@@ -1614,164 +1627,80 @@ class StataFile extends ArrayObject
 			// Return enumeration name.
 			//
 			if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
-				return $this->mDict[ $theVariable ]
-								   [ self::kOFFSET_ENUM ]
-								   [ self::kOFFSET_ENUM_NAME ];						// ==>
+				return $this->mDict[ $theVariable ][ self::kOFFSET_ENUM ];			// ==>
 
 			return NULL;															// ==>
 
 		} // Return current value.
 
-		//
-		// Create enumeration record.
-		//
-		if( ! array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
-			$this->mDict[ $theVariable ][ self::kOFFSET_ENUM ]
-				= [];
-
 		return
-			$this->mDict[ $theVariable ]
-						[ self::kOFFSET_ENUM ]
-						[ self::kOFFSET_ENUM_NAME ]
+			$this->mDict[ $theVariable ][ self::kOFFSET_ENUM ]
 				= (string)$theValue;												// ==>
 
-	} // VariableEnumName.
+	} // VariableEnumeration.
 
 
 	/*===================================================================================
-	 *	VariableEnumVals																*
+	 *	Enumeration																		*
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Set or retrieve the dataset variable enumeration value(s).</h4>
+	 * <h4>Set or retrieve enumerations.</h4>
 	 *
-	 * This method can be used to set or retrieve the dataset enumeration value(s), the
-	 * method expects the following parameters:
+	 * This method can be used to set or retrieve the enumerations, the method expects the
+	 * following parameters:
 	 *
 	 * <ul>
-	 * 	<li><b>$theVariable</b>: Variable index, name or <tt>NULL</tt> for all variables.
-	 * 	<li><b>$theValue</b>: The new enumeration values list or operation:
+	 * 	<li><b>$theName</b>: Enumeration name or operation:
 	 * 	 <ul>
-	 * 		<li><tt>NULL</tt>: Return the current value.
-	 * 		<li><tt>array</tt>: Set the new values list related to the provided variable
-	 * 			index.
-	 * 		<li><em>other</em>: Any other type will be interpreted as a list with a single
-	 * 			value.
+	 * 		<li><tt>NULL</tt>: Return the list of enumeration names; in this case the next
+	 * 			parameter is ignored.
+	 * 		<li><tt>string</tt>: The enumeration name to match for retrieving or setting.
 	 * 	 </ul>
-	 * 	<li><b>$asName</b>: If <tt>TRUE</tt> it is assumed the variable is provided by name,
-	 * 		if not, it is assumed the variable(s) are provided as the variable index (int).
+	 * 	<li><b>$theValue</b>: The new enumerations list, or operation:
+	 * 	 <ul>
+	 * 		<li><tt>NULL</tt>: Return the current enumerations.
+	 * 		<li><tt>array</tt>: Set the enumeration elements, the provided array must have
+	 * 			the following format:
+	 * 		 <ul>
+	 * 			<li><i>index</i>: The enumeration key (integer).
+	 * 			<li><i>value</i>: The enumeration label (string).
+	 * 		 </ul>
+	 * 	 </ul>
 	 * </ul>
 	 *
-	 * @param int					$theVariable		Variable index or <tt>NULL</tt>.
-	 * @param mixed					$theValue			New value, or operation.
-	 * @param bool					$asName				<tt>TRUE</tt> variable name(s).
-	 * @return mixed				Enumeration name or all enumeration values.
+	 * When retrieving enumerations, if the enumeration name is not matched, the method will
+	 * return <tt>NULL</tt>.
+	 *
+	 * @param string				$theName			Enumeration name or operation.
+	 * @param array					$theValue			New enumeration(s), or operation.
+	 * @return array				Enumeration list.
 	 * @throws InvalidArgumentException
 	 */
-	public function VariableEnumVals(	   $theVariable = NULL,
-											$theValue = NULL,
-											bool $asName = FALSE )
+	public function Enumeration( string $theName = NULL, array $theValue = NULL )
 	{
 		//
-		// Get all names.
+		// Get enumeration names.
 		//
-		if( ($theValue === NULL)
-			&& ($theVariable === NULL) )
-		{
-			//
-			// Iterate data dictionary.
-			//
-			$list = [];
-			foreach( array_keys( $this->mDict ) as $key )
-			{
-				//
-				// Check if it has enumeration.
-				//
-				if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $key ] ) )
-				{
-					//
-					// Handle names.
-					//
-					if( $asName )
-						$list[ $this->mDict[ $key ][ self::kOFFSET_NAME ] ]
-							= $this->mDict[ $key ]
-						[ self::kOFFSET_ENUM ]
-						[ self::kOFFSET_ENUM_ELMS ];
-
-					//
-					// Handle indexes.
-					//
-					else
-						$list[ $key ]
-							= $this->mDict[ $key ]
-						[ self::kOFFSET_ENUM ]
-						[ self::kOFFSET_ENUM_ELMS ];
-
-				} // Has enumeration values.
-
-			} // Iterating data dictionary.
-
-			return $list;															// ==>
-
-		} // Get all enumerations.
+		if( $theName === NULL )
+			return array_keys( $this->mEnum );										// ==>
 
 		//
-		// Convert variable name to index.
-		//
-		if( ! is_int( $theVariable ) )
-		{
-			$tmp = $this->parseName( $theVariable );
-			if( $tmp === NULL )
-				throw new InvalidArgumentException(
-					"Unknown variable name [$theVariable]." );					// !@! ==>
-			$theVariable = (int)$tmp;
-		}
-
-		//
-		// Check variable index.
-		//
-		if( ($theVariable < 0)
-			|| ($theVariable > $this->VariablesCount()) )
-			throw new InvalidArgumentException(
-				"Invalid variable index [$theVariable]." );						// !@! ==>
-
-		//
-		// Return current value.
+		// Return enumerations list.
 		//
 		if( $theValue === NULL )
-		{
-			//
-			// Return enumeration name.
-			//
-			if( array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
-				return $this->mDict[ $theVariable ]
-				[ self::kOFFSET_ENUM ]
-				[ self::kOFFSET_ENUM_ELMS ];						// ==>
-
-			return NULL;															// ==>
-
-		} // Return current value.
+			return ( array_key_exists( $theName, $this->mEnum ) )
+				? $this->mEnum[ $theName ]											// ==>
+				: NULL;															// ==>
 
 		//
-		// Check provided value.
+		// Set new entry.
 		//
-		if( ! is_array( $theValue ) )
-			$theValue = [ $theValue ];
+		$this->mEnum[ $theName ] = $theValue;
 
-		//
-		// Create enumeration record.
-		//
-		if( ! array_key_exists( self::kOFFSET_ENUM, $this->mDict[ $theVariable ] ) )
-			$this->mDict[ $theVariable ][ self::kOFFSET_ENUM ]
-				= [];
+		return $this->mEnum[ $theName ];											// ==>
 
-		return
-			$this->mDict[ $theVariable ]
-			[ self::kOFFSET_ENUM ]
-			[ self::kOFFSET_ENUM_ELMS ]
-				= $theValue;														// ==>
-
-	} // VariableEnumVals.
+	} // Enumeration.
 
 
 	/*===================================================================================
@@ -1957,6 +1886,8 @@ class StataFile extends ArrayObject
 		$this->valueLabelRead( $file );
 		$this->labelRead( $file );
 		$this->characteristicsRead( $file );
+		$this->dataRead( $file );
+		$this->stringsRead( $file );
 
 		return $file;																// ==>
 
@@ -2772,6 +2703,11 @@ class StataFile extends ArrayObject
 	protected function valueLabelRead( SplFileObject $theFile )
 	{
 		//
+		// Init local storage.
+		//
+		$this->mEnum = [];
+
+		//
 		// Get opening token.
 		//
 		$this->readToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, FALSE );
@@ -2783,7 +2719,17 @@ class StataFile extends ArrayObject
 		{
 			$label = $this->readCString( $theFile, 129 );
 			if( strlen( $label ) )
-				$this->VariableEnumName( $variable, $label, FALSE );
+			{
+				//
+				// Allocate enumerations list.
+				//
+				$this->Enumeration( $label, [] );
+
+				//
+				// Set variable enumeration.
+				//
+				$this->VariableEnumeration( $variable, $label, FALSE );
+			}
 		}
 
 		//
@@ -2818,7 +2764,7 @@ class StataFile extends ArrayObject
 		//
 		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
 			$this->writeCString(
-				$theFile, 129, (string)$this->VariableEnumName( $variable )
+				$theFile, 129, (string)$this->VariableEnumeration( $variable )
 			);
 
 		//
@@ -3082,6 +3028,329 @@ class StataFile extends ArrayObject
 	} // characteristicsWrite.
 
 
+	/*===================================================================================
+	 *	dataRead																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read data.</h4>
+	 *
+	 * This method can be used to read the data from the provided file, the method expects
+	 * the file pointer to be set on the data file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 */
+	protected function dataRead( SplFileObject $theFile )
+	{
+		//
+		// Init local storage.
+		//
+		$this->mData = [];
+
+		//
+		// Get opening token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_DATA, FALSE );
+
+		//
+		// Build variables list.
+		//
+		$variables = [];
+		foreach( $this->mDict as $variable )
+			$variables[ $variable[ self::kOFFSET_NAME ] ] = [
+				'type' => $variable[ self::kOFFSET_TYPE ],
+				'size' => $this->parseTypeSize( $variable[ self::kOFFSET_TYPE ] )
+			];
+
+		//
+		// Scan entries.
+		//
+		for( $element = 1; $element <= $this->ObservationsCount(); $element++ )
+		{
+			//
+			// Init local storage.
+			//
+			$record = [];
+
+			//
+			// Iterate variables.
+			//
+			foreach( $variables as $name => $type )
+			{
+				//
+				// Handle fixed string.
+				//
+				if( $type[ 'type' ] <= 2045 )
+				{
+					//
+					// Read data.
+					//
+					$value = $this->readCString(
+						$theFile, $this->parseTypeSize( $type[ 'type' ] ) );
+
+					//
+					// Add element.
+					//
+					if( strlen( $value ) )
+						$record[ $name ] = $value;
+
+				} // Fixed string.
+
+				//
+				// Handle other types.
+				//
+				else
+				{
+					//
+					// Parse type.
+					//
+					switch( $type[ 'type' ] )
+					{
+						case 32768:	// strL
+							$var = $this->readUShort( $theFile );
+							$obs = $this->readUInt48( $theFile );
+							if( $var && $obs )
+								$record[ $name ] = [ 'v' => $var, 'o' => $obs ];
+							break;
+
+						case 65526: // double
+							$value = $this->readDouble( $theFile );
+							if( $value !== NULL )
+								$record[ $name ] = $value;
+							break;
+
+						case 65527: // float
+							$value = $this->readFloat( $theFile );
+							if( $value !== NULL )
+								$record[ $name ] = $value;
+							break;
+
+						case 65528: // long
+							$value = $this->readLong( $theFile );
+							if( $value !== NULL )
+								$record[ $name ] = $value;
+							break;
+
+						case 65529: // int
+							$value = $this->readInt( $theFile );
+							if( $value !== NULL )
+								$record[ $name ] = $value;
+							break;
+
+						case 65530: // byte
+							$value = $this->readByte( $theFile );
+							if( $value !== NULL )
+								$record[ $name ] = $value;
+							break;
+
+						default:
+							throw new InvalidArgumentException(
+								"Invalid type [" .
+								$type[ 'type' ] .
+								"]." );											// !@! ==>
+
+					} // Parsing other types.
+
+				} // Other types.
+
+			} // Iterating variables.
+
+			//
+			// Add observation.
+			//
+			if( count( $record ) )
+				$this->mData[ $element ] = $record;
+
+		} // Scanning observations.
+
+		//
+		// Get closing token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_DATA, TRUE );
+
+	} // dataRead.
+
+
+	/*===================================================================================
+	 *	dataWrite																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write the characteristics.</h4>
+	 *
+	 * This method can be used to write the characteristics into the provided file, the
+	 * method expects the file pointer to be set on the characteristics token.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 */
+	protected function dataWrite( SplFileObject $theFile )
+	{
+		//
+		// Init local stroage.
+		//
+		$strings = [];
+
+		//
+		// Write opening token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_DATA, FALSE );
+
+		//
+		// Iterate data.
+		//
+		foreach( $this->mData as $record )
+		{
+
+		} // Iterating data.
+
+		//
+		// Write closing token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_DATA, TRUE );
+
+	} // dataWrite.
+
+
+	/*===================================================================================
+	 *	stringsRead																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read long strings.</h4>
+	 *
+	 * This method can be used to read the long strings from the provided file, the method
+	 * expects the file pointer to be set on the long strings file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 */
+	protected function stringsRead( SplFileObject $theFile )
+	{
+		//
+		// Init local storage.
+		//
+		$strings = [];
+
+		//
+		// Get opening token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_LSTRING, FALSE );
+
+		//
+		// Iterate strings.
+		//
+		while( TRUE )
+		{
+			//
+			// Check if there is a characteristics.
+			//
+			$tmp = $theFile->fread( 3 );
+			if( $tmp == 'GSO' )
+			{
+				//
+				// Read variable and observation.
+				//
+				$v = $this->readUInt32( $theFile );
+				$o = $this->readUInt64( $theFile );
+
+				//
+				// Read type.
+				//
+				$t = $this->readUChar( $theFile );
+
+				//
+				// Read length.
+				//
+				$len = $this->readUInt32( $theFile );
+
+				//
+				// Read string.
+				//
+				switch( $t )
+				{
+					case 129: // binary
+						$string = $theFile->fread( $len );
+						break;
+
+					case 130: // c-string
+						$string = $this->readCString( $theFile, $len );
+						break;
+
+					default:
+						throw new InvalidArgumentException(
+							"Invalid string type [$t]." );						// !@! ==>
+				}
+
+				//
+				// Get hash.
+				//
+				$hash = md5( $string );
+
+				//
+				// Add string.
+				//
+				$this->mStrings[ $hash ] = $string;
+
+				//
+				// Save string reference.
+				//
+				$strings[ $v ][ $o ] = $hash;
+
+			} // Found string block.
+
+			//
+			// Handle end of block.
+			//
+			elseif( $tmp == '</s' )
+			{
+				//
+				// Init local storage.
+				//
+				$token = 'trls>';
+
+				//
+				// Try to read rest of closing block.
+				//
+				$tmp = $theFile->fread( strlen( $token ) );
+				if( $tmp != $token )
+					throw new RuntimeException(
+						"Unable to read end of strings block " .
+						"[$tmp]." );											// !@! ==>
+
+				//
+				// Exit loop.
+				//
+				break;															// =>
+
+			} // End of block.
+
+			//
+			// Handle error.
+			//
+			else
+				throw new RuntimeException(
+					"Unexpected end of characteristics block [$tmp]." );		// !@! ==>
+
+		} // Iterating strings.
+
+		//
+		// Iterate long string variables.
+		//
+		foreach( $strings as $variable => $observations )
+		{
+			//
+			// Itarate long string observations.
+			//
+			foreach( $observations as $observation => $hash )
+				$this->mData
+					[ $observation ]
+					[ $this->mDict[ $variable - 1 ][ self::kOFFSET_NAME ] ]
+						= & $this->mStrings[ $hash ];
+
+		} // Iterating long string variables.
+
+	} // stringsRead.
+
+
 
 /*=======================================================================================
  *																						*
@@ -3191,11 +3460,74 @@ class StataFile extends ArrayObject
 
 
 	/*===================================================================================
+	 *	readUChar																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read unsigned 8 bit integer.</h4>
+	 *
+	 * This method can be used to read an unsigned char.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return int					The integer value.
+	 * @throws RuntimeException
+	 *
+	 * @uses ByteOrder()
+	 */
+	protected function readUChar( SplFileObject $theFile )
+	{
+		//
+		// Read value.
+		//
+		$data = $theFile->fread( 1 );
+		if( $data === FALSE )
+			throw new RuntimeException(
+				"Unable to read unsigned char." );								// !@! ==>
+
+		return unpack( 'C', $data )[ 1 ];											// ==>
+
+	} // readUChar.
+
+
+	/*===================================================================================
+	 *	writeUChar																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write unsigned 8 bit integer.</h4>
+	 *
+	 * This method can be used to write an unsigned char.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 * @param int					$theValue			Value to write.
+	 * @throws RuntimeException
+	 *
+	 * @uses ByteOrder()
+	 */
+	protected function writeUChar( SplFileObject $theFile, int $theValue )
+	{
+		//
+		// Pack value.
+		//
+		$value = pack( 'C', $theValue );
+
+		//
+		// write value.
+		//
+		$ok = $theFile->fwrite( $value );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write unsigned char." );								// !@! ==>
+
+	} // writeUChar.
+
+
+	/*===================================================================================
 	 *	readUShort																		*
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Read unsigned short.</h4>
+	 * <h4>Read unsigned 16 bit integer.</h4>
 	 *
 	 * This method can be used to read an unsigned short.
 	 *
@@ -3238,7 +3570,7 @@ class StataFile extends ArrayObject
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Write unsigned short.</h4>
+	 * <h4>Write unsigned 16 bit integer.</h4>
 	 *
 	 * This method can be used to write an unsigned short.
 	 *
@@ -3284,7 +3616,7 @@ class StataFile extends ArrayObject
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Read unsigned long.</h4>
+	 * <h4>Read unsigned 32 bit integer.</h4>
 	 *
 	 * This method can be used to read a 32 bit unsigned long.
 	 *
@@ -3330,7 +3662,7 @@ class StataFile extends ArrayObject
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Write unsigned long.</h4>
+	 * <h4>Write unsigned 32 bit integer.</h4>
 	 *
 	 * This method can be used to write a 32 bit unsigned long.
 	 *
@@ -3379,7 +3711,7 @@ class StataFile extends ArrayObject
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Read unsigned long.</h4>
+	 * <h4>Read unsigned 64 bit integer.</h4>
 	 *
 	 * This method can be used to read a 64 bit unsigned long.
 	 *
@@ -3425,7 +3757,7 @@ class StataFile extends ArrayObject
 	 *==================================================================================*/
 
 	/**
-	 * <h4>Write unsigned long.</h4>
+	 * <h4>Write unsigned 64 bit integer.</h4>
 	 *
 	 * This method can be used to write a 64 bit unsigned long.
 	 *
@@ -3467,6 +3799,103 @@ class StataFile extends ArrayObject
 				"Unable to write unsigned long." );								// !@! ==>
 
 	} // writeUInt64.
+
+
+	/*===================================================================================
+	 *	readUInt48																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read unsigned 48 bit integer.</h4>
+	 *
+	 * This method can be used to read a 48 bit unsigned integer.
+	 *
+	 * <em>Note that the method returns a signed integer, since PHP does not handle unsigned
+	 * integers.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return int					The signed integer.
+	 * @throws RuntimeException
+	 *
+	 * @uses ByteOrder()
+	 */
+	protected function readUInt48( SplFileObject $theFile )
+	{
+		//
+		// Read value.
+		//
+		$data = $theFile->fread( 6 );
+		if( $data === FALSE )
+			throw new RuntimeException(
+				"Unable to read 48 bit integer." );								// !@! ==>
+
+		//
+		// Unpack.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				$data = "\0\0" . $data;
+				return unpack( 'J', $data )[ 1 ];									// ==>
+
+			case 'LSF':
+				$data .= "\0\0";
+				return unpack( 'P', $data )[ 1 ];									// ==>
+		}
+
+		throw new RuntimeException(
+			"Invalid byte order [$tmp]." );										// !@! ==>
+
+	} // readUInt48.
+
+
+	/*===================================================================================
+	 *	writeUInt48																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write unsigned 48 bit integer.</h4>
+	 *
+	 * This method can be used to write a 48 bit unsigned long.
+	 *
+	 * <em>Note that the method expects a signed integer, since PHP does not handle unsigned
+	 * integers.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @param int					$theValue			Value to write.
+	 * @throws RuntimeException
+	 *
+	 * @uses ByteOrder()
+	 */
+	protected function writeUInt48( SplFileObject $theFile, int $theValue )
+	{
+		//
+		// Pack value.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				$value = substr( pack( 'J', $theValue ), 2 );
+				break;
+
+			case 'LSF':
+				$value = substr( pack( 'P', $theValue ), 0, 6 );
+				break;
+
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );								// !@! ==>
+		}
+
+		//
+		// write value.
+		//
+		$ok = $theFile->fwrite( $value );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write 48 bit integer." );							// !@! ==>
+
+	} // writeUInt48.
 
 
 	/*===================================================================================
@@ -3561,8 +3990,8 @@ class StataFile extends ArrayObject
 	 * This method can be used to read a C-string contained in a fixed length buffer.
 	 *
 	 * The length parameter is expressed as the field length in bytes, the resulting string
-	 * will be truncated at the first encountered zero binary character, or at the end of
-	 * the field.
+	 * will be truncated at the first encountered zero binary character, or at the provided
+	 * length.
 	 *
 	 * If you provide a zero length, the method will return <tt>NULL</tt>.
 	 *
@@ -3588,7 +4017,14 @@ class StataFile extends ArrayObject
 				throw new RuntimeException(
 					"Unable to read [$theLength] bytes." );						// !@! ==>
 
-			return mb_strstr( $string, "\0", TRUE, 'UTF-8' );						// ==>
+			//
+			// Locate end of string.
+			//
+			$tmp = mb_strstr( $string, "\0", TRUE, 'UTF-8' );
+
+			return ( ($tmp = mb_strstr( $string, "\0", TRUE, 'UTF-8' )) === FALSE )
+				 ? $string															// ==>
+				 : $tmp;															// ==>
 
 		} // Has length.
 
@@ -3607,7 +4043,8 @@ class StataFile extends ArrayObject
 	 * This method can be used to write a zero padded string.
 	 *
 	 * The length parameter is expressed as the field length in bytes, the method will write
-	 * binary zero characters until the full field has been padded.
+	 * the string and pad with <tt>0x00</tt> characters to fill the size; if the string
+	 * fills the size completely no padding will be written.
 	 *
 	 * The string is expected to be an UTF-8 string, which means that each character may be
 	 * at most 4 bytes long: the method will truncate the string to fit the provided field
@@ -3631,28 +4068,17 @@ class StataFile extends ArrayObject
 		$theValue = $this->truncateString( $theValue, $theLength );
 
 		//
+		// Pad string.
+		//
+		$theValue = pack( "a$theLength", $theValue );
+
+		//
 		// Write string.
 		//
 		$ok = $theFile->fwrite( $theValue );
 		if( $ok === NULL )
 			throw new RuntimeException(
 				"Unable to write string [$theValue]." );						// !@! ==>
-
-		//
-		// Add padding.
-		//
-		$length = $theLength - mb_strlen( $theValue, '8bit' );
-		while( $length-- )
-		{
-			//
-			// Add padding.
-			//
-			$ok = $theFile->fwrite( "\0" );
-			if( $ok === NULL )
-				throw new RuntimeException(
-					"Unable to write string padding." );						// !@! ==>
-
-		} // Needs padding.
 
 	} // writeCString.
 
@@ -3758,6 +4184,582 @@ class StataFile extends ArrayObject
 		} // No time stamp.
 
 	} // writeTimeStamp.
+
+
+
+/*=======================================================================================
+ *																						*
+ *							PROTECTED DATA READING INTERFACE							*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	readByte																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read a data byte.</h4>
+	 *
+	 * This method can be used to read a byte value of data, it will return the value or
+	 * <tt>NULL</tt> if it is a missing value.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return int					Byte integer value or <tt>NULL</tt>.
+	 * @throws RuntimeException
+	 */
+	protected function readByte( SplFileObject $theFile )
+	{
+		//
+		// Read byte.
+		//
+		$value = $theFile->fread( 1 );
+		if( $value === FALSE )
+			throw new RuntimeException(
+				"Unable to read byte." );										// !@! ==>
+
+		//
+		// Pack byte.
+		//
+		$value = unpack( 'c', $value )[ 1 ];
+
+		//
+		// Handle missing.
+		//
+		if( ($value < -127)
+		 || ($value > 100) )
+			return NULL;															// ==>
+
+		return $value;																// ==>
+
+	} // readByte.
+
+
+	/*===================================================================================
+	 *	writeByte																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write a data byte.</h4>
+	 *
+	 * This method can be used to write a byte value of data, if the value is among the
+	 * missing value codes, the method will write <tt>0x65</tt>.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @param int					$theValue			Value to write.
+	 * @throws RuntimeException
+	 */
+	protected function writeByte( SplFileObject $theFile, int $theValue )
+	{
+		//
+		// Pack value.
+		//
+		$value = ( ($theValue < -127) || ($theValue > 100) )
+			   ? 0x65
+			   : pack( 'c', $theValue );
+
+		//
+		// Write value.
+		//
+		$ok = $theFile->fwrite( $value, 1 );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write byte." );										// !@! ==>
+
+	} // writeByte.
+
+
+	/*===================================================================================
+	 *	readInt																			*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read a 16 bits signed integer.</h4>
+	 *
+	 * This method can be used to read a 16 bit signed integer value, it will return the
+	 * integer value or <tt>NULL</tt> if it is a missing value.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return int					Signed short integer value or <tt>NULL</tt>.
+	 * @throws RuntimeException
+	 */
+	protected function readInt( SplFileObject $theFile )
+	{
+		//
+		// Read 16 bits.
+		//
+		$value = $theFile->fread( 2 );
+		if( $value === FALSE )
+			throw new RuntimeException(
+				"Unable to read short." );										// !@! ==>
+
+		//
+		// Unpack value.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				$value = unpack( 'n', $value )[ 1 ];
+				break;
+
+			case 'LSF':
+				$value = unpack( 'v', $value )[ 1 ];
+				break;
+
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );								// !@! ==>
+		}
+
+		//
+		// Convert to signed integer.
+		//
+		if( $value >= pow( 2, 15 ) )
+			$value -= pow( 2, 16 );
+
+		//
+		// Handle missing.
+		//
+		if( ($value < -32767)
+		 || ($value >  32740) )
+			return NULL;															// ==>
+
+		return $value;																// ==>
+
+	} // readInt.
+
+
+	/*===================================================================================
+	 *	writeInt																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write a 16 bits signed integer.</h4>
+	 *
+	 * This method can be used to write a 16 bit signed integer, if the value is among the
+	 * missing value codes, the method will write <tt>0x7fe5</tt>.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @param int					$theValue			Value to write.
+	 * @throws RuntimeException
+	 */
+	protected function writeInt( SplFileObject $theFile, int $theValue )
+	{
+		//
+		// Handle missing value.
+		//
+		if( ($theValue < -32767)
+		 || ($theValue > 32740) )
+			$value = 0x7fe5;
+
+		//
+		// Pack value.
+		//
+		else
+		{
+			//
+			// Parse byte order.
+			//
+			switch( $tmp = $this->ByteOrder() )
+			{
+				case 'MSF':
+					$value = pack( 'n', $theValue );
+					break;
+
+				case 'LSF':
+					$value = pack( 'v', $theValue );
+					break;
+
+				default:
+					throw new RuntimeException(
+						"Invalid byte order [$tmp]." );							// !@! ==>
+			}
+		}
+
+		//
+		// Write value.
+		//
+		$ok = $theFile->fwrite( $value, 2 );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write short." );										// !@! ==>
+
+	} // writeInt.
+
+
+	/*===================================================================================
+	 *	readLong																			*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read a 32 bits signed integer.</h4>
+	 *
+	 * This method can be used to read a 32 bit signed integer value, it will return the
+	 * integer value or <tt>NULL</tt> if it is a missing value.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return int					Signed long integer value or <tt>NULL</tt>.
+	 * @throws RuntimeException
+	 */
+	protected function readLong( SplFileObject $theFile )
+	{
+		//
+		// Read 32 bits.
+		//
+		$value = $theFile->fread( 4 );
+		if( $value === FALSE )
+			throw new RuntimeException(
+				"Unable to read long." );										// !@! ==>
+
+		//
+		// Unpack value.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				$value = unpack( 'N', $value )[ 1 ];
+				break;
+
+			case 'LSF':
+				$value = unpack( 'V', $value )[ 1 ];
+				break;
+
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );								// !@! ==>
+		}
+
+		//
+		// Handle missing.
+		//
+		if( ($value < -2147483647)
+		 || ($value >  2147483620) )
+			return NULL;															// ==>
+
+		return $value;																// ==>
+
+	} // readLong.
+
+
+	/*===================================================================================
+	 *	writeLong																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write a 32 bits signed integer.</h4>
+	 *
+	 * This method can be used to write a 32 bit signed integer, if the value is among the
+	 * missing value codes, the method will write <tt>0x7fe5</tt>.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @param int					$theValue			Value to write.
+	 * @throws RuntimeException
+	 */
+	protected function writeLong( SplFileObject $theFile, int $theValue )
+	{
+		//
+		// Handle missing value.
+		//
+		if( ($theValue < -2147483647)
+		 || ($theValue > 2147483620) )
+			$value = 0x7fffffe5;
+
+		//
+		// Pack value.
+		//
+		else
+		{
+			//
+			// Parse byte order.
+			//
+			switch( $tmp = $this->ByteOrder() )
+			{
+				case 'MSF':
+					$value = pack( 'N', $theValue );
+					break;
+
+				case 'LSF':
+					$value = unpack( 'V', $theValue );
+					break;
+
+				default:
+					throw new RuntimeException(
+						"Invalid byte order [$tmp]." );							// !@! ==>
+			}
+		}
+
+		//
+		// Write value.
+		//
+		$ok = $theFile->fwrite( $value, 4 );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write long." );										// !@! ==>
+
+	} // writeLong.
+
+
+	/*===================================================================================
+	 *	readFloat																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read a 32 bits signed float.</h4>
+	 *
+	 * This method can be used to read a 32 bit signed floating point value, it will return
+	 * the floating point value or <tt>NULL</tt> if it is a missing value.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return float				Signed float value or <tt>NULL</tt>.
+	 * @throws RuntimeException
+	 */
+	protected function readFloat( SplFileObject $theFile )
+	{
+		//
+		// Read 32 bits.
+		//
+		$value = $theFile->fread( 4 );
+		if( $value === FALSE )
+			throw new RuntimeException(
+				"Unable to read long." );										// !@! ==>
+
+		//
+		// Unpack value.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				$value = unpack( "f", pack( "I", unpack( "N", $value )[ 1 ] ) )[ 1 ];
+				break;
+
+			case 'LSF':
+				$value = unpack( "f", pack( "I", unpack( "V", $value )[ 1 ] ) )[ 1 ];
+				break;
+
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );								// !@! ==>
+		}
+
+		//
+		// Handle missing.
+		//
+		if( ($value < -1.701e+38)
+		 || ($value >  1.701e+38) )
+			return NULL;															// ==>
+
+		return $value;																// ==>
+
+	} // readFloat.
+
+
+	/*===================================================================================
+	 *	writeFloat																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write a 32 bits signed float.</h4>
+	 *
+	 * This method can be used to write a 32 bit signed floating point value, if the value
+	 * is among the missing value codes, the method will write <tt>0x7f000000</tt> or
+	 * <tt>0x0000007f</tt> for big and little endian respectively.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @param float					$theValue			Value to write.
+	 * @throws RuntimeException
+	 */
+	protected function writeFloat( SplFileObject $theFile, float $theValue )
+	{
+		//
+		// Handle missing value.
+		//
+		if( ($theValue < -2147483647)
+		 || ($theValue > 2147483620) )
+		{
+			//
+			// Parse byte order.
+			//
+			switch( $tmp = $this->ByteOrder() )
+			{
+				case 'MSF':
+					$value = 0x7f000000;
+					break;
+
+				case 'LSF':
+					$value = 0x0000007f;
+					break;
+
+				default:
+					throw new RuntimeException(
+						"Invalid byte order [$tmp]." );							// !@! ==>
+			}
+		}
+
+		//
+		// Pack value.
+		//
+		else
+		{
+			//
+			// Parse byte order.
+			//
+			switch( $tmp = $this->ByteOrder() )
+			{
+				case 'MSF':
+					$value = pack( "N", unpack( "I", pack( "f", $theValue ) )[ 1 ] );
+					break;
+
+				case 'LSF':
+					$value = pack( "V", unpack( "I", pack( "f", $theValue ) )[ 1 ] );
+					break;
+
+				default:
+					throw new RuntimeException(
+						"Invalid byte order [$tmp]." );							// !@! ==>
+			}
+		}
+
+		//
+		// Write value.
+		//
+		$ok = $theFile->fwrite( $value, 4 );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write float." );										// !@! ==>
+
+	} // writeFloat.
+
+
+	/*===================================================================================
+	 *	readDouble																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read a 64 bits signed float.</h4>
+	 *
+	 * This method can be used to read a 64 bit signed floating point value, it will return
+	 * the floating point value or <tt>NULL</tt> if it is a missing value.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @return double				Signed double value or <tt>NULL</tt>.
+	 * @throws RuntimeException
+	 */
+	protected function readDouble( SplFileObject $theFile )
+	{
+		//
+		// Read 64 bits.
+		//
+		$value = $theFile->fread( 8 );
+		if( $value === FALSE )
+			throw new RuntimeException(
+				"Unable to read double." );										// !@! ==>
+
+		//
+		// Unpack value.
+		//
+		switch( $tmp = $this->ByteOrder() )
+		{
+			case 'MSF':
+				$value = unpack( "d", pack( "Q", unpack( "J", $value )[ 1 ] ) )[ 1 ];
+				break;
+
+			case 'LSF':
+				$value = unpack( "d", pack( "Q", unpack( "P", $value )[ 1 ] ) )[ 1 ];
+				break;
+
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );								// !@! ==>
+		}
+
+		//
+		// Handle missing.
+		//
+		if( ($value < -1.798e+308)
+		 || ($value >  8.988e+307) )
+			return NULL;															// ==>
+
+		return $value;																// ==>
+
+	} // readDouble
+
+
+	/*===================================================================================
+	 *	writeDouble																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write a 64 bits signed float.</h4>
+	 *
+	 * This method can be used to write a 64 bit signed floating point value, if the value
+	 * is among the missing value codes, the method will write <tt>0x7fe0000000000000</tt>
+	 * or <tt>0x000000000000e07f</tt> for big and little endian respectively.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 * @param double				$theValue			Value to write.
+	 * @throws RuntimeException
+	 */
+	protected function writeDouble( SplFileObject $theFile, double $theValue )
+	{
+		//
+		// Handle missing value.
+		//
+		if( ($theValue < -1.798e+308)
+		 || ($theValue >  8.988e+307) )
+		{
+			//
+			// Parse byte order.
+			//
+			switch( $tmp = $this->ByteOrder() )
+			{
+				case 'MSF':
+					$value = 0x7fe0000000000000;
+					break;
+
+				case 'LSF':
+					$value = 0x000000000000e07f;
+					break;
+
+				default:
+					throw new RuntimeException(
+						"Invalid byte order [$tmp]." );							// !@! ==>
+			}
+		}
+
+		//
+		// Pack value.
+		//
+		else
+		{
+			//
+			// Parse byte order.
+			//
+			switch( $tmp = $this->ByteOrder() )
+			{
+				case 'MSF':
+					$value = pack( "J", unpack( "q", pack( "d", $theValue ) )[ 1 ] );
+					break;
+
+				case 'LSF':
+					$value = pack( "P", unpack( "q", pack( "d", $theValue ) )[ 1 ] );
+					break;
+
+				default:
+					throw new RuntimeException(
+						"Invalid byte order [$tmp]." );							// !@! ==>
+			}
+		}
+
+		//
+		// Write value.
+		//
+		$ok = $theFile->fwrite( $value, 8 );
+		if( $ok === NULL )
+			throw new RuntimeException(
+				"Unable to write double." );									// !@! ==>
+
+	} // writeDouble.
 
 
 
@@ -3919,9 +4921,6 @@ class StataFile extends ArrayObject
 				return 65529;														// ==>
 
 			case 'byte':
-				return 65526;														// ==>
-
-			case 'double':
 				return 65530;														// ==>
 
 			default:
@@ -3930,6 +4929,84 @@ class StataFile extends ArrayObject
 		}
 
 	} // parseType.
+
+
+	/*===================================================================================
+	 *	parseTypeSize																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Parse a data type size.</h4>
+	 *
+	 * This method can be used to get the size in bytes corresponding to the provided data
+	 * type.
+	 *
+	 * The method expects a single parameter that can be either an integer representing a
+	 * data type code as stored in the Stata file, or a string representing the type name.
+	 *
+	 * If the provided value is not valid, the method will raise an exception.
+	 *
+	 * If you provide an array, the method will return an array of parsed elements.
+	 *
+	 * @param mixed					$theValue			Type name, code or list.
+	 * @return mixed				Type size(s).
+	 * @throws InvalidArgumentException
+	 */
+	protected function parseTypeSize( $theValue )
+	{
+		//
+		// Handle list.
+		//
+		if( is_array( $theValue ) )
+		{
+			//
+			// Iterate list.
+			//
+			$list = [];
+			foreach( $theValue as $key => $value )
+				$list[ $key ]
+					= $this->parseTypeSize( $value );
+
+			return $list;															// ==>
+
+		} // Provided list.
+
+		//
+		// Convert to type code.
+		//
+		if( ! is_int( $theValue ) )
+			$theValue = $this->parseType( $theValue );
+		//
+		// Handle fixed length string.
+		//
+		if( $theValue <= 2045 )
+			return $theValue;														// ==>
+
+		//
+		// Parse code.
+		//
+		switch( $theValue )
+		{
+			case 32768:	// strL
+			case 65526:	// double
+				return 8;															// ==>
+
+			case 65527:	// float
+			case 65528:	// long
+				return 4;															// ==>
+
+			case 65529:	// int
+				return 2;															// ==>
+
+			case 65530:	// byte
+				return 1;															// ==>
+
+			default:
+				throw new InvalidArgumentException(
+					"Invalid type [$theValue]." );								// !@! ==>
+		}
+
+	} // parseTypeSize.
 
 
 	/*===================================================================================
