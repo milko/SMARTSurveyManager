@@ -35,6 +35,17 @@ $result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );
 var_dump( $result->getRealPath() );
 print_r( $test );
 
+echo( "\n" );
+
+//
+// Write file.
+//
+echo( '$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );' . "\n" );
+$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );
+var_dump( $result->getRealPath() );
+print_r( $test );
+exit;
+
 echo( "\n====================================================================================\n\n" );
 
 //
@@ -85,16 +96,6 @@ print_r( $result );
 echo( '$result = $test->Note( "COLOR note 2", "COLOR" );' . "\n" );
 $result = $test->Note( "COLOR note 2", "COLOR" );
 print_r( $result );
-print_r( $test );
-
-echo( "\n" );
-
-//
-// Write file.
-//
-echo( '$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );' . "\n" );
-$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );
-var_dump( $result->getRealPath() );
 print_r( $test );
 
 

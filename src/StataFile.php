@@ -322,6 +322,35 @@ class StataFile
 	const kOFFSET_CHARS_DATA = 'data';
 
 	/**
+	 * <h4>Long string offset.</h4>
+	 *
+	 * This constant holds the <em>long string offset</em> in the long strings list.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_STRING = 'string';
+
+	/**
+	 * <h4>Long string variable offset.</h4>
+	 *
+	 * This constant holds the <em>long string variable offset</em> in the long strings
+	 * list.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_VARIABLE = 'v';
+
+	/**
+	 * <h4>Long string observation offset.</h4>
+	 *
+	 * This constant holds the <em>long string observation offset</em> in the long strings
+	 * list.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_OBSERVSTION = 'o';
+
+	/**
 	 * <h4>File path.</h4>
 	 *
 	 * This data member holds the <em>file path</em>.
@@ -467,7 +496,12 @@ class StataFile
 	 *
 	 * <ul>
 	 * 	<li><i>index</i>: The MD5 hash of the string.
-	 * 	<li><i>value</i>: The string.
+	 * 	<li><i>value</i>: An array structured as follows:
+	 * 	 <ul>
+	 * 		<li><tt>{@link kOFFSET_STRING}</tt>: The string.
+	 * 		<li><tt>{@link kOFFSET_VARIABLE}</tt>: The variable index.
+	 * 		<li><tt>{@link kOFFSET_OBSERVATiON}</tt>: The observation index.
+	 * 	 </ul>
 	 * </ul>
 	 *
 	 * @var array
@@ -1979,6 +2013,12 @@ class StataFile
 		$this->characteristicsWrite( $file );
 		$this->mMap[ self::kTOKEN_DATASET_DATA ] = $file->ftell();
 
+		//
+		// Write data.
+		//
+		$this->dataWrite( $file );
+		$this->mMap[ self::kTOKEN_DATASET_LSTRING ] = $file->ftell();
+
 		return $file;																// ==>
 
 	} // Write.
@@ -3178,28 +3218,126 @@ class StataFile
 	/**
 	 * <h4>Write the characteristics.</h4>
 	 *
-	 * This method can be used to write the characteristics into the provided file, the
-	 * method expects the file pointer to be set on the characteristics token.
+	 * This method can be used to write the data into the provided file, the method expects
+	 * the file pointer to be set on the data token.
+	 *
+	 * The method will return an array consisting of the long strings list.
 	 *
 	 * @param SplFileObject			$theFile			File to write.
 	 */
 	protected function dataWrite( SplFileObject $theFile )
 	{
 		//
-		// Init local stroage.
-		//
-		$strings = [];
-
-		//
 		// Write opening token.
 		//
 		$this->writeToken( $theFile, self::kTOKEN_DATASET_DATA, FALSE );
 
 		//
-		// Iterate data.
+		// Iterate observations.
 		//
 		foreach( $this->mData as $record )
 		{
+			//
+			// Iterate variables.
+			//
+			foreach( $this->mDict as $variable => $type )
+			{
+				//
+				// Handle fixed string.
+				//
+				if( $type[ 'type' ] <= 2045 )
+					$this->writeCString(
+						$theFile,
+						$type[ 'type' ],
+						( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+							? $record[ $type[ self::kOFFSET_NAME ] ]
+							: "\0" );
+
+				//
+				// Handle other types.
+				//
+				else
+				{
+					//
+					// Parse type.
+					//
+					switch( $type[ 'type' ] )
+					{
+						case 32768:	// strL
+							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+							{
+								$hash = md5( $record[ $type[ self::kOFFSET_NAME ] ] );
+								$this->writeUShort(
+									$theFile,
+									$this->mStrings[ $hash ][ self::kOFFSET_VARIABLE ] );
+								$this->writeUInt48(
+									$theFile,
+									$this->mStrings[ $hash ][ self::kOFFSET_OBSERVSTION ] );
+							}
+							else
+							{
+								$this->writeUShort( $theFile, 0 );
+								$this->writeUInt48( $theFile, 0 );
+							}
+							break;
+
+						case 65526: // double
+							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+								$this->writeDouble(
+									$theFile,
+									(double)$record[ $type[ self::kOFFSET_NAME ] ] );
+							elseif( $this->mByteOrder == 'MSF' )
+								$theFile->fwrite( hex2bin( '7fe0000000000000' ) );
+							else
+								$theFile->fwrite( hex2bin( '000000000000e07f' ) );
+							break;
+
+						case 65527: // float
+							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+								$this->writeFloat(
+									$theFile,
+									(float)$record[ $type[ self::kOFFSET_NAME ] ] );
+							elseif( $this->mByteOrder == 'MSF' )
+								$theFile->fwrite( hex2bin( '7f000000' ) );
+							else
+								$theFile->fwrite( hex2bin( '0000007f' ) );
+							break;
+
+						case 65528: // long
+							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+								$value = $record[ $type[ self::kOFFSET_NAME ] ];
+							else
+								$value = 2147483621;
+							$this->writeLong( $theFile, $value );
+							break;
+
+						case 65529: // int
+							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+								$value = $record[ $type[ self::kOFFSET_NAME ] ];
+							else
+								$value = 32741;
+							$this->writeInt( $theFile, $value );
+							break;
+
+						case 65530: // byte
+							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+								$value = $record[ $type[ self::kOFFSET_NAME ] ];
+							else
+								$value = 101;
+							$this->writeByte( $theFile, $value );
+							break;
+
+						default:
+							throw new InvalidArgumentException(
+								"Invalid type [" .
+								$type[ 'type' ] .
+								"]." );											// !@! ==>
+
+					} // Parsing other types.
+
+				} // Other types.
+
+			} // Iterating variables.
 
 		} // Iterating data.
 
@@ -3288,7 +3426,12 @@ class StataFile
 				//
 				// Add string.
 				//
-				$this->mStrings[ $hash ] = $string;
+				if( ! array_key_exists( $hash, $this->mStrings ) )
+				{
+					$this->mStrings[ $hash ][ self::kOFFSET_STRING ] = $string;
+					$this->mStrings[ $hash ][ self::kOFFSET_VARIABLE ] = $v;
+					$this->mStrings[ $hash ][ self::kOFFSET_OBSERVSTION ] = $o;
+				}
 
 				//
 				// Save string reference.
@@ -3344,7 +3487,7 @@ class StataFile
 				$this->mData
 					[ $observation ]
 					[ $this->mDict[ $variable - 1 ][ self::kOFFSET_NAME ] ]
-						= & $this->mStrings[ $hash ];
+						= & $this->mStrings[ $hash ][ self::kOFFSET_STRING ];
 
 		} // Iterating long string variables.
 
@@ -4351,30 +4494,24 @@ class StataFile
 		//
 		if( ($theValue < -32767)
 		 || ($theValue > 32740) )
-			$value = 0x7fe5;
+			$theValue = 32741;
 
 		//
-		// Pack value.
+		// Parse byte order.
 		//
-		else
+		switch( $tmp = $this->ByteOrder() )
 		{
-			//
-			// Parse byte order.
-			//
-			switch( $tmp = $this->ByteOrder() )
-			{
-				case 'MSF':
-					$value = pack( 'n', $theValue );
-					break;
+			case 'MSF':
+				$value = pack( 'n', $theValue );
+				break;
 
-				case 'LSF':
-					$value = pack( 'v', $theValue );
-					break;
+			case 'LSF':
+				$value = pack( 'v', $theValue );
+				break;
 
-				default:
-					throw new RuntimeException(
-						"Invalid byte order [$tmp]." );							// !@! ==>
-			}
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );							// !@! ==>
 		}
 
 		//
@@ -4463,30 +4600,24 @@ class StataFile
 		//
 		if( ($theValue < -2147483647)
 		 || ($theValue > 2147483620) )
-			$value = 0x7fffffe5;
+			$theValue = 0x7fffffe5;
 
 		//
-		// Pack value.
+		// Parse byte order.
 		//
-		else
+		switch( $tmp = $this->ByteOrder() )
 		{
-			//
-			// Parse byte order.
-			//
-			switch( $tmp = $this->ByteOrder() )
-			{
-				case 'MSF':
-					$value = pack( 'N', $theValue );
-					break;
+			case 'MSF':
+				$value = pack( 'N', $theValue );
+				break;
 
-				case 'LSF':
-					$value = unpack( 'V', $theValue );
-					break;
+			case 'LSF':
+				$value = pack( 'V', $theValue );
+				break;
 
-				default:
-					throw new RuntimeException(
-						"Invalid byte order [$tmp]." );							// !@! ==>
-			}
+			default:
+				throw new RuntimeException(
+					"Invalid byte order [$tmp]." );							// !@! ==>
 		}
 
 		//
@@ -4700,8 +4831,13 @@ class StataFile
 	 * @param double				$theValue			Value to write.
 	 * @throws RuntimeException
 	 */
-	protected function writeDouble( SplFileObject $theFile, double $theValue )
+	protected function writeDouble( SplFileObject $theFile, $theValue )
 	{
+		//
+		// Cast to double.
+		//
+		$theValue = (double)$theValue;
+
 		//
 		// Handle missing value.
 		//
