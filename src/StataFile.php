@@ -2017,8 +2017,10 @@ class StataFile
 		// Write map.
 		//
 		$file->fseek( $this->mMap[ self::kTOKEN_DATASET_MAP ] );
+		$this->writeToken( $file, self::kTOKEN_DATASET_MAP, FALSE );
 		foreach( $this->mMap as $offset )
 			$this->writeUInt64( $file, $offset );
+		$this->writeToken( $file, self::kTOKEN_DATASET_MAP, TRUE );
 
 		return $file;																// ==>
 
@@ -3812,7 +3814,7 @@ class StataFile
 				//
 				// Load offsets, keys and string.
 				//
-				$table[ 'txt' ] += "$value\0";
+				$table[ 'txt' ] .= "$value\0";
 				$table[ 'key' ] = $key;
 				$table[ 'off' ][ $i ] = ( $i )
 									  ? $table[ 'off' ][ $i - 1 ] + $length
