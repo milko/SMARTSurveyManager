@@ -2019,6 +2019,12 @@ class StataFile
 		$this->dataWrite( $file );
 		$this->mMap[ self::kTOKEN_DATASET_LSTRING ] = $file->ftell();
 
+		//
+		// Write strings.
+		//
+		$this->stringsWrite( $file );
+		$this->mMap[ self::kTOKEN_DATASET_VALLABEL ] = $file->ftell();
+
 		return $file;																// ==>
 
 	} // Write.
@@ -3485,13 +3491,80 @@ class StataFile
 			//
 			foreach( $observations as $observation => $hash )
 				$this->mData
-					[ $observation ]
-					[ $this->mDict[ $variable - 1 ][ self::kOFFSET_NAME ] ]
-						= & $this->mStrings[ $hash ][ self::kOFFSET_STRING ];
+				[ $observation ]
+				[ $this->mDict[ $variable - 1 ][ self::kOFFSET_NAME ] ]
+					= & $this->mStrings[ $hash ][ self::kOFFSET_STRING ];
 
 		} // Iterating long string variables.
 
 	} // stringsRead.
+
+
+	/*===================================================================================
+	 *	stringsWrite																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write long strings.</h4>
+	 *
+	 * This method can be used to write the long strings into the provided file, the method
+	 * expects the file pointer to be set on the long strings file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 */
+	protected function stringsWrite( SplFileObject $theFile )
+	{
+		//
+		// Write opening token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_LSTRING, FALSE );
+
+		//
+		// Iterate strings.
+		//
+		foreach( $this->mStrings as $hash => $string )
+		{
+			//
+			// Write GSO.
+			//
+			$theFile->fwrite( 'GSO', 3 );
+
+			//
+			// Write variable.
+			//
+			$this->writeUInt32( $theFile, $string[ self::kOFFSET_VARIABLE ] );
+
+			//
+			// Write observation.
+			//
+			$this->writeUInt64( $theFile, $string[ self::kOFFSET_OBSERVSTION ] );
+
+			//
+			// Write type.
+			//
+			$theFile->fwrite( hex2bin( '81' ), 1 );
+
+			//
+			// Write length.
+			//
+			$this->writeUInt32(
+				$theFile, mb_strlen( $string[ self::kOFFSET_STRING ], '8bit' ) );
+
+			//
+			// Write string.
+			//
+			$theFile->fwrite(
+				$string[ self::kOFFSET_STRING ],
+				mb_strlen( $string[ self::kOFFSET_STRING ], '8bit' ) );
+
+		} // Iterating strings.
+
+		//
+		// Write closing token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_LSTRING, TRUE );
+
+	} // stringsWrite.
 
 
 
