@@ -210,6 +210,15 @@ class StataFile
 	const kTOKEN_DATASET_VALLABEL = 'value_labels';
 
 	/**
+	 * <h4>Dataset value lables element marker.</h4>
+	 *
+	 * This constant holds the <em>dataset value lables element file marker</em>.
+	 *
+	 * @var string
+	 */
+	const kTOKEN_DATASET_VALLABEL_ELM = 'lbl';
+
+	/**
 	 * <h4>Dataset close token.</h4>
 	 *
 	 * This constant holds the <em>dataset close token</em>.
@@ -320,35 +329,6 @@ class StataFile
 	 * @var string
 	 */
 	const kOFFSET_CHARS_DATA = 'data';
-
-	/**
-	 * <h4>Long string offset.</h4>
-	 *
-	 * This constant holds the <em>long string offset</em> in the long strings list.
-	 *
-	 * @var string
-	 */
-	const kOFFSET_STRING = 'string';
-
-	/**
-	 * <h4>Long string variable offset.</h4>
-	 *
-	 * This constant holds the <em>long string variable offset</em> in the long strings
-	 * list.
-	 *
-	 * @var string
-	 */
-	const kOFFSET_VARIABLE = 'v';
-
-	/**
-	 * <h4>Long string observation offset.</h4>
-	 *
-	 * This constant holds the <em>long string observation offset</em> in the long strings
-	 * list.
-	 *
-	 * @var string
-	 */
-	const kOFFSET_OBSERVSTION = 'o';
 
 	/**
 	 * <h4>File path.</h4>
@@ -496,12 +476,7 @@ class StataFile
 	 *
 	 * <ul>
 	 * 	<li><i>index</i>: The MD5 hash of the string.
-	 * 	<li><i>value</i>: An array structured as follows:
-	 * 	 <ul>
-	 * 		<li><tt>{@link kOFFSET_STRING}</tt>: The string.
-	 * 		<li><tt>{@link kOFFSET_VARIABLE}</tt>: The variable index.
-	 * 		<li><tt>{@link kOFFSET_OBSERVATiON}</tt>: The observation index.
-	 * 	 </ul>
+	 * 	<li><i>value</i>: The string
 	 * </ul>
 	 *
 	 * @var array
@@ -1922,6 +1897,7 @@ class StataFile
 		$this->characteristicsRead( $file );
 		$this->dataRead( $file );
 		$this->stringsRead( $file );
+		$this->enumsRead( $file );
 
 		return $file;																// ==>
 
@@ -2024,6 +2000,25 @@ class StataFile
 		//
 		$this->stringsWrite( $file );
 		$this->mMap[ self::kTOKEN_DATASET_VALLABEL ] = $file->ftell();
+
+		//
+		// Write enumerations.
+		//
+		$this->enumsWrite( $file );
+		$this->mMap[ self::kTOKEN_CLOSE ] = $file->ftell();
+
+		//
+		// Write close token.
+		//
+		$this->writeToken( $file, self::kTOKEN_DATASET_OPEN, TRUE );
+		$this->mMap[ self::kTOKEN_EOF ] = $file->ftell();
+
+		//
+		// Write map.
+		//
+		$file->fseek( $this->mMap[ self::kTOKEN_DATASET_MAP ] );
+		foreach( $this->mMap as $offset )
+			$this->writeUInt64( $file, $offset );
 
 		return $file;																// ==>
 
@@ -3241,6 +3236,7 @@ class StataFile
 		//
 		// Iterate observations.
 		//
+		$observation = 1;
 		foreach( $this->mData as $record )
 		{
 			//
@@ -3273,12 +3269,8 @@ class StataFile
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 							{
 								$hash = md5( $record[ $type[ self::kOFFSET_NAME ] ] );
-								$this->writeUShort(
-									$theFile,
-									$this->mStrings[ $hash ][ self::kOFFSET_VARIABLE ] );
-								$this->writeUInt48(
-									$theFile,
-									$this->mStrings[ $hash ][ self::kOFFSET_OBSERVSTION ] );
+								$this->writeUShort( $theFile, $variable );
+								$this->writeUInt48( $theFile, $observation );
 							}
 							else
 							{
@@ -3344,6 +3336,11 @@ class StataFile
 				} // Other types.
 
 			} // Iterating variables.
+
+			//
+			// Increment observation.
+			//
+			$observation++;
 
 		} // Iterating data.
 
@@ -3433,11 +3430,7 @@ class StataFile
 				// Add string.
 				//
 				if( ! array_key_exists( $hash, $this->mStrings ) )
-				{
-					$this->mStrings[ $hash ][ self::kOFFSET_STRING ] = $string;
-					$this->mStrings[ $hash ][ self::kOFFSET_VARIABLE ] = $v;
-					$this->mStrings[ $hash ][ self::kOFFSET_OBSERVSTION ] = $o;
-				}
+					$this->mStrings[ $hash ] = $string;
 
 				//
 				// Save string reference.
@@ -3493,7 +3486,7 @@ class StataFile
 				$this->mData
 				[ $observation ]
 				[ $this->mDict[ $variable - 1 ][ self::kOFFSET_NAME ] ]
-					= & $this->mStrings[ $hash ][ self::kOFFSET_STRING ];
+					= & $this->mStrings[ $hash ];
 
 		} // Iterating long string variables.
 
@@ -3520,44 +3513,66 @@ class StataFile
 		$this->writeToken( $theFile, self::kTOKEN_DATASET_LSTRING, FALSE );
 
 		//
-		// Iterate strings.
+		// Build variables list.
 		//
-		foreach( $this->mStrings as $hash => $string )
+		$variables = [];
+		foreach( $this->mDict as $variable => $type )
+		{
+			if( $type[ self::kOFFSET_TYPE ] == 32768 )
+				$variables[ $variable ] = $type[ self::kOFFSET_NAME ];
+		}
+
+		//
+		// Iterate data.
+		//
+		foreach( $this->mData as $observation => $record )
 		{
 			//
-			// Write GSO.
+			// Iterate long strings.
 			//
-			$theFile->fwrite( 'GSO', 3 );
+			foreach( $variables as $variable => $name )
+			{
+				//
+				// Check long string.
+				//
+				if( array_key_exists( $name, $record ) )
+				{
+					//
+					// Write GSO.
+					//
+					$theFile->fwrite( 'GSO', 3 );
 
-			//
-			// Write variable.
-			//
-			$this->writeUInt32( $theFile, $string[ self::kOFFSET_VARIABLE ] );
+					//
+					// Write variable.
+					//
+					$this->writeUInt32( $theFile, $variable );
 
-			//
-			// Write observation.
-			//
-			$this->writeUInt64( $theFile, $string[ self::kOFFSET_OBSERVSTION ] );
+					//
+					// Write observation.
+					//
+					$this->writeUInt64( $theFile, $observation );
 
-			//
-			// Write type.
-			//
-			$theFile->fwrite( hex2bin( '81' ), 1 );
+					//
+					// Write type.
+					//
+					$theFile->fwrite( hex2bin( '81' ), 1 );
 
-			//
-			// Write length.
-			//
-			$this->writeUInt32(
-				$theFile, mb_strlen( $string[ self::kOFFSET_STRING ], '8bit' ) );
+					//
+					// Write length.
+					//
+					$this->writeUInt32( $theFile, mb_strlen( $record[ $name ], '8bit' ) );
 
-			//
-			// Write string.
-			//
-			$theFile->fwrite(
-				$string[ self::kOFFSET_STRING ],
-				mb_strlen( $string[ self::kOFFSET_STRING ], '8bit' ) );
+					//
+					// Write string.
+					//
+					$theFile->fwrite(
+						$record[ $name ], mb_strlen( $record[ $name ], '8bit' ) );
 
-		} // Iterating strings.
+				} // Has long string.
+
+			} // Iterating long string variables.
+
+		} // Iterate observations.
 
 		//
 		// Write closing token.
@@ -3565,6 +3580,313 @@ class StataFile
 		$this->writeToken( $theFile, self::kTOKEN_DATASET_LSTRING, TRUE );
 
 	} // stringsWrite.
+
+
+	/*===================================================================================
+	 *	enumsRead																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Read the enumerations.</h4>
+	 *
+	 * This method can be used to read the enumerations from the provided file, the
+	 * method expects the file pointer to be set on the value labels file token.
+	 *
+	 * @param SplFileObject			$theFile			File to parse.
+	 */
+	protected function enumsRead( SplFileObject $theFile )
+	{
+		//
+		// Get opening token.
+		//
+		$this->readToken( $theFile, self::kTOKEN_DATASET_VALLABEL, FALSE );
+
+		//
+		// Iterate enumerations.
+		//
+		while( TRUE )
+		{
+			//
+			// Check if there is a value label.
+			//
+			$tmp = $theFile->fread( 5 );
+			if( $tmp == '<lbl>' )
+			{
+				//
+				// Init local storage.
+				//
+				$offsets = $keys = [];
+
+				//
+				// Read table length.
+				//
+				$length = $this->readUInt32( $theFile );
+
+				//
+				// Read enumeration.
+				//
+				$enum = $this->readCString( $theFile, 129 );
+
+				//
+				// Read padding.
+				//
+				$theFile->fread( 3 );
+
+				//
+				// Read entries.
+				//
+				$entries = $this->readUInt32( $theFile );
+
+				//
+				// Read text length.
+				//
+				$txt_length = $this->readUInt32( $theFile );
+
+				//
+				// Read offsets table.
+				//
+				$i = 0;
+				while( $i < $entries )
+					$offsets[ $i++ ] = $this->readUInt32( $theFile );
+
+				//
+				// Read keys table.
+				//
+				$i = 0;
+				while( $i < $entries )
+					$keys[ $i++ ] = $this->readUInt32( $theFile );
+
+				//
+				// Read enumerations.
+				//
+				$i = 0;
+				while( $i < $entries )
+				{
+					//
+					// Get element length.
+					//
+					$length = ( ($i + 1) < $entries )
+							? $offsets[ $i + 1 ] - $offsets[ $i ]
+							: $txt_length;
+
+					//
+					// Update text length.
+					//
+					$txt_length -= $length;
+
+					//
+					// Set enumeration.
+					//
+					$this->mEnum[ $enum ][ $keys[ $i ] ]
+						= $this->readCString( $theFile, $length );
+
+					//
+					// Increment index.
+					//
+					$i++;
+
+				} // Reading enumerations.
+
+				//
+				// Read end of element.
+				//
+				$tmp = $theFile->fread( 6 );
+				if( $tmp == '</lbl>' )
+					continue;													// =>
+
+				throw new RuntimeException(
+					"Unable to read end of value labels element block " .
+					"[$tmp]." );												// !@! ==>
+
+			} // Found value labels.
+
+			//
+			// Handle end of block.
+			//
+			elseif( $tmp == '</val' )
+			{
+				//
+				// Init local storage.
+				//
+				$token = 'ue_labels>';
+
+				//
+				// Try to read rest of closing block.
+				//
+				$tmp = $theFile->fread( strlen( $token ) );
+				if( $tmp != $token )
+					throw new RuntimeException(
+						"Unable to read end of value labels block " .
+						"[$tmp]." );											// !@! ==>
+
+				//
+				// Exit loop.
+				//
+				break;															// =>
+
+			} // End of block.
+
+			//
+			// Handle error.
+			//
+			else
+				throw new RuntimeException(
+					"Unexpected end of value labels block [$tmp]." );			// !@! ==>
+
+		} // Iterating enumerations.
+
+	} // enumsRead.
+
+
+	/*===================================================================================
+	 *	enumsWrite																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write the enumerations.</h4>
+	 *
+	 * This method can be used to write the enumerations into the provided file, the
+	 * method expects the file pointer to be set on the value labels token.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 */
+	protected function enumsWrite( SplFileObject $theFile )
+	{
+		//
+		// Write opening token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL, FALSE );
+
+		//
+		// Iterate characteristics.
+		//
+		foreach( $this->mEnum as $enum => $elements )
+		{
+			//
+			// Init local storage.
+			//
+			$table = [ 'len' => 4 + 4 + ((count( $elements ) * 4) * 2) ];
+
+			//
+			// Set enumeration name.
+			//
+			$table[ 'enum' ] = $enum;
+
+			//
+			// Set padding.
+			//
+			$table[ 'pad' ] = "\0\0\0";
+
+			//
+			// Set number of entries.
+			//
+			$table[ 'entries' ] = count( $elements );
+
+			//
+			// Init text length.
+			//
+			$table[ 'txtlen' ] = 0;
+
+			//
+			// Init key and offset tables.
+			//
+			$table[ 'off' ] = [];
+			$table[ 'key' ] = [];
+
+			//
+			// Init text.
+			//
+			$table[ 'txt' ] = '';
+
+			//
+			// Load table data.
+			//
+			$i = 0;
+			foreach( $elements as $key => $value )
+			{
+				//
+				// Get text length.
+				//
+				$length = mb_strlen( $value, '8bit' ) + 1;
+
+				//
+				// Load offsets, keys and string.
+				//
+				$table[ 'txt' ] += "$value\0";
+				$table[ 'key' ] = $key;
+				$table[ 'off' ][ $i ] = ( $i )
+									  ? $table[ 'off' ][ $i - 1 ] + $length
+									  : 0;
+
+				//
+				// Increment lengths and indexes.
+				//
+				$i++;
+				$table[ 'len' ] += $length;
+				$table[ 'txtlen' ] += $length;
+
+			} // Iterating entries.
+
+			//
+			// Open element.
+			//
+			$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL_ELM, FALSE );
+
+			//
+			// Write table length.
+			//
+			$this->writeUInt32( $theFile, $table[ 'len' ] );
+
+			//
+			// Write enumeration name.
+			//
+			$this->writeCString( $theFile, 129, $table[ 'enum' ] );
+
+			//
+			// Write padding.
+			//
+			$theFile->fwrite( "\0\0\0", 3 );
+
+			//
+			// Write entries.
+			//
+			$this->writeUInt32( $theFile, $table[ 'entries' ] );
+
+			//
+			// Write text length.
+			//
+			$this->writeUInt32( $theFile, $table[ 'txtlen' ] );
+
+			//
+			// Write offsets.
+			//
+			foreach( $table[ 'off' ] as $value )
+				$this->writeUInt32( $theFile, $value );
+
+			//
+			// Write keys.
+			//
+			foreach( $table[ 'key' ] as $value )
+				$this->writeUInt32( $theFile, $value );
+
+			//
+			// Write text.
+			//
+			$theFile->fwrite( $table[ 'txt' ] );
+
+			//
+			// Close element.
+			//
+			$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL_ELM, TRUE );
+
+		} // Iterating characteristics.
+
+		//
+		// Write closing token.
+		//
+		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL, TRUE );
+
+	} // enumsWrite.
 
 
 
