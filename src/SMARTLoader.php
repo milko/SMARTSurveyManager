@@ -860,30 +860,30 @@ class SMARTLoader
 	 * 	<li><em>Unit</em>: This element is an array containing the unit record, the array
 	 * 		key identifies the unit:
 	 * 	 <ul>
-	 * 		<li><tt>{@link kDDICT_CHILD_ID</tt>: Child dataset.
-	 * 		<li><tt>{@link kDDICT_MOTHER_ID</tt>: Mother dataset.
-	 * 		<li><tt>{@link kDDICT_HOUSEHOLD_ID</tt>: Household dataset.
+	 * 		<li><tt>{@link kDDICT_CHILD_ID}</tt>: Child dataset.
+	 * 		<li><tt>{@link kDDICT_MOTHER_ID}</tt>: Mother dataset.
+	 * 		<li><tt>{@link kDDICT_HOUSEHOLD_ID}</tt>: Household dataset.
 	 * 	 </ul>
 	 * 		Each element is an array containing the following items:
 	 * 	 <ul>
-	 * 		<li><tt>{@link kDDICT_STATUS</tt>: Dataset <em>status</em>.
-	 * 		<li><tt>{@link kDDICT_FIELDS</tt>: Dataset <em>field information</em>.
-	 * 		<li><tt>{@link kDATASET_OFFSET_FILE</tt>: Dataset <em>file path</em>.
-	 * 		<li><tt>{@link kDATASET_OFFSET_HEADER</tt>: Dataset <em>header row number</em>.
-	 * 		<li><tt>{@link kDATASET_OFFSET_DATA</tt>: Dataset <em>data row number</em>.
-	 * 		<li><tt>{@link kDATASET_OFFSET_DATE</tt>: <em>Survey date</em> header value.
-	 * 		<li><tt>{@link kDATASET_OFFSET_LOCATION</tt>: <em>Survey location number</em>
+	 * 		<li><tt>{@link kDDICT_STATUS}</tt>: Dataset <em>status</em>.
+	 * 		<li><tt>{@link kDDICT_FIELDS}</tt>: Dataset <em>field information</em>.
+	 * 		<li><tt>{@link kDATASET_OFFSET_FILE}</tt>: Dataset <em>file path</em>.
+	 * 		<li><tt>{@link kDATASET_OFFSET_HEADER}</tt>: Dataset <em>header row number</em>.
+	 * 		<li><tt>{@link kDATASET_OFFSET_DATA}</tt>: Dataset <em>data row number</em>.
+	 * 		<li><tt>{@link kDATASET_OFFSET_DATE}</tt>: <em>Survey date</em> header value.
+	 * 		<li><tt>{@link kDATASET_OFFSET_LOCATION}</tt>: <em>Survey location number</em>
 	 * 			header value.
-	 * 		<li><tt>{@link kDATASET_OFFSET_TEAM</tt>: <em>Survey team number</em> header
+	 * 		<li><tt>{@link kDATASET_OFFSET_TEAM}</tt>: <em>Survey team number</em> header
 	 * 			value.
-	 * 		<li><tt>{@link kDATASET_OFFSET_CLUSTER</tt>: <em>Survey cluster number</em>
+	 * 		<li><tt>{@link kDATASET_OFFSET_CLUSTER}</tt>: <em>Survey cluster number</em>
 	 * 			header value.
-	 * 		<li><tt>{@link kDATASET_OFFSET_IDENTIFIER</tt>: <em>Unit number</em> header
+	 * 		<li><tt>{@link kDATASET_OFFSET_IDENTIFIER}</tt>: <em>Unit number</em> header
 	 * 			value, this corresponds to the household number in the household dataset and
 	 * 			the same for mother and child datasets.
-	 * 		<li><tt>{@link kDATASET_OFFSET_HOUSEHOLD_ID</tt>: <em>Household number</em>
+	 * 		<li><tt>{@link kDATASET_OFFSET_HOUSEHOLD_ID}</tt>: <em>Household number</em>
 	 * 			header value in mother and child datasets.
-	 * 		<li><tt>{@link kDATASET_OFFSET_MOTHER_ID</tt>: <em>Mother number</em> header
+	 * 		<li><tt>{@link kDATASET_OFFSET_MOTHER_ID}</tt>: <em>Mother number</em> header
 	 * 			value in child dataset.
 	 * 	 </ul>
 	 * </ul>

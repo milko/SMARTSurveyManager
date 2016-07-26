@@ -12,6 +12,10 @@
  *																						*
  *======================================================================================*/
 
+use MongoDB\Client;
+use MongoDB\Database;
+use MongoDB\Collection;
+
 /**
  * <h4>Stata .dta file.</h4>
  *
@@ -217,6 +221,24 @@ class StataFile
 	 * @var string
 	 */
 	const kTOKEN_FILE_VALUE_LABEL_ELEMENT = 'lbl';
+
+	/**
+	 * <h4>Data source name offset.</h4>
+	 *
+	 * This constant holds the <em>data source name offset</em> in the header.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_DSN = 'DSN';
+
+	/**
+	 * <h4>File path offset.</h4>
+	 *
+	 * This constant holds the <em>file path offset</em> in the header.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_PATH = 'path';
 
 	/**
 	 * <h4>Variable name offset.</h4>
@@ -439,81 +461,161 @@ class StataFile
 	const kMAP_EOF = 13;
 
 	/**
-	 * <h4>File path.</h4>
+	 * <h4>Stata maximum fixed string size.</h4>
 	 *
-	 * This data member holds the <em>file path</em>.
+	 * This constant holds the <em>maximum size for fized strings</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_TYPE_FIXED_STRING = 2045;
+
+	/**
+	 * <h4>Stata long string type.</h4>
+	 *
+	 * This constant holds the <em>long string stata data type</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_TYPE_LONG_STRING = 32768;
+
+	/**
+	 * <h4>Stata double type.</h4>
+	 *
+	 * This constant holds the <em>double stata data type</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_TYPE_DOUBLE = 65526;
+
+	/**
+	 * <h4>Stata float type.</h4>
+	 *
+	 * This constant holds the <em>float stata data type</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_TYPE_FLOAT = 65527;
+
+	/**
+	 * <h4>Stata long type.</h4>
+	 *
+	 * This constant holds the <em>long stata data type</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_TYPE_LONG = 65528;
+
+	/**
+	 * <h4>Stata short type.</h4>
+	 *
+	 * This constant holds the <em>short stata data type</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_TYPE_SHORT = 65529;
+
+	/**
+	 * <h4>Stata byte type.</h4>
+	 *
+	 * This constant holds the <em>byte stata data type</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_TYPE_BYTE = 65530;
+
+	/**
+	 * <h4>Stata maximum variables count.</h4>
+	 *
+	 * This constant holds the <em>Stata maximum variables count</em>.
+	 *
+	 * @var int
+	 */
+	const kSTATA_MAX_VARS = 65535;
+
+	/**
+	 * <h4>Default client DSN.</h4>
+	 *
+	 * This constant holds the <em>default client connection data source name</em>.
 	 *
 	 * @var string
 	 */
-	protected $mPath = NULL;
+	const kNAME_CLIENT = 'mongodb://localhost:27017';
 
 	/**
-	 * <h4>File format ID.</h4>
+	 * <h4>Default database name.</h4>
 	 *
-	 * This data member holds the <em>file release version</em>.
+	 * This constant holds the <em>default database name</em>.
 	 *
 	 * @var string
 	 */
-	protected $mFormat = NULL;
+	const kNAME_DATABASE = 'STATA';
 
 	/**
-	 * <h4>Byte order.</h4>
+	 * <h4>Default survey collection name.</h4>
 	 *
-	 * This data member holds the <em>byte order</em>:
+	 * This constant holds the <em>default survey collection name</em>.
+	 *
+	 * @var string
+	 */
+	const kNAME_COLLECTION = 'data';
+
+	/**
+	 * <h4>Dataset header.</h4>
+	 *
+	 * This data member holds the <em>dataset header</em>, it is an array structured as
+	 * follows:
 	 *
 	 * <ul>
-	 * 	<li><tt>MSF</tt>: Most Significant byte First (big endian).
-	 * 	<li><tt>LSF</tt>: Least Significant byte First (little endian).
+	 * 	<li><tt>{@link kOFFSET_DSN}</tt>: The data source name.
+	 * 	<li><tt>{@link kOFFSET_PATH}</tt>: The file path.
+	 * 	<li><tt>{@link kTOKEN_FILE_RELEASE}</tt>: The file release version.
+	 * 	<li><tt>{@link kTOKEN_FILE_BYTE_ORDER}</tt>: The file byte order (<tt>MSF</tt> for
+	 * 		big endian and <tt>LSF</tt> for little endian).
+	 * 	<li><tt>{@link kTOKEN_FILE_VARIABLES_COUNT}</tt>: The number of variables.
+	 * 	<li><tt>{@link kTOKEN_FILE_OBSERVATIONS_COUNT}</tt>: The number of observations.
+	 * 	<li><tt>{@link kTOKEN_FILE_LABEL}</tt>: The file label.
+	 * 	<li><tt>{@link kTOKEN_FILE_TIMESTAMP}</tt>: The file time stamp.
 	 * </ul>
 	 *
-	 * @var string
+	 * @var array
 	 */
-	protected $mByteOrder = NULL;
-
-	/**
-	 * <h4>Variables count.</h4>
-	 *
-	 * This data member holds the <em>number of variables</em>.
-	 *
-	 * @var int
-	 */
-	protected $mNumVars = NULL;
-
-	/**
-	 * <h4>Observations count.</h4>
-	 *
-	 * This data member holds the <em>number of observations</em>.
-	 *
-	 * <em>Note that the original value is unsigned, while PHP does not support unsigned
-	 * integers: we do not handle the case in which the number would be converted to a
-	 * negative value.</em>
-	 *
-	 * @var int
-	 */
-	protected $mNumRecs = NULL;
-
-	/**
-	 * <h4>Dataset label.</h4>
-	 *
-	 * This data member holds the <em>dataset label</em>.
-	 *
-	 * @var string
-	 */
-	protected $mLabelDataset = NULL;
-
-	/**
-	 * <h4>Dataset time stamp.</h4>
-	 *
-	 * This data member holds the <em>dataset time stamp</em>.
-	 *
-	 * @var DateTime
-	 */
-	protected $mTimeStamp = NULL;
+	protected $mHeader = [];
 
 	/**
 	 * <h4>Dataset map.</h4>
 	 *
-	 * This data member holds the <em>dataset map</em>.
+	 * This data member holds the <em>dataset map</em>, it is an array structured as
+	 * follows:
+	 *
+	 * <ul>
+	 * 	<li><tt>{@link kMAP_OPEN}</tt>: The opening file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_OPEN}</tt>).
+	 * 	<li><tt>{@link kMAP_MAP}</tt>: The map file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_MAP}</tt>).
+	 * 	<li><tt>{@link kMAP_TYPES}</tt>: The variable types file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_VARIABLE_TYPES}</tt>).
+	 * 	<li><tt>{@link kMAP_NAMES}</tt>: The variable names file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_VARIABLE_NAMES}</tt>).
+	 * 	<li><tt>{@link kMAP_SORT}</tt>: The sort list file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_SORT}</tt>).
+	 * 	<li><tt>{@link kMAP_FORMATS}</tt>: The variable formats file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_FORMATS}</tt>).
+	 * 	<li><tt>{@link kMAP_VALUE_LABEL_NAMES}</tt>: The value label names file token
+	 * 		offset (<tt>{@link kTOKEN_FILE_VALUE_LABEL_NAMES}</tt>).
+	 * 	<li><tt>{@link kMAP_VARIABLE_LABELS}</tt>: The variable labels file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_VARIABLE_LABELS}</tt>).
+	 * 	<li><tt>{@link kMAP_CHARACTERISTICS}</tt>: The characteristics file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_CHARACTERISTICS}</tt>).
+	 * 	<li><tt>{@link kMAP_DATA}</tt>: The data file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_DATA}</tt>).
+	 * 	<li><tt>{@link kMAP_LONG_STRINGS}</tt>: The long strings file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_LONG_STRINGS}</tt>).
+	 * 	<li><tt>{@link kMAP_VALUE_LABELS}</tt>: The value labels file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_VALUE_LABELS}</tt>).
+	 * 	<li><tt>{@link kMAP_CLOSE}</tt>: The closing file token offset
+	 * 		(<tt>{@link kTOKEN_FILE_OPEN}</tt>).
+	 * 	<li><tt>{@link kMAP_EOF}</tt>: The end of file offset.
+	 * </ul>
 	 *
 	 * @var array
 	 */
@@ -601,6 +703,34 @@ class StataFile
 	 */
 	protected $mData = [];
 
+	/**
+	 * <h4>Client connection.</h4>
+	 *
+	 * This data member holds the <em>client connection</em>.
+	 *
+	 * @var MongoDB\Client
+	 */
+	protected $mClient = NULL;
+
+	/**
+	 * <h4>Database connection.</h4>
+	 *
+	 * This data member holds the <em>database connection</em>.
+	 *
+	 * @var MongoDB\Database
+	 */
+	protected $mDatabase = NULL;
+
+	/**
+	 * <h4>Data collection connection.</h4>
+	 *
+	 * This data member holds the <em>data collection connection</em>, this will be where
+	 * the data will reside.
+	 *
+	 * @var MongoDB\Collection
+	 */
+	protected $mCollection = NULL;
+
 
 
 
@@ -619,18 +749,32 @@ class StataFile
 	/**
 	 * <h4>Instantiate class.</h4>
 	 *
-	 * This method will reset the data members to their idle state.
+	 * This method will reset the data members to their idle state and open the provided
+	 * data source connection.
+	 *
+	 * @param string				$theClient			Data source name.
+	 * @param string				$theDatabase		Database name.
+	 * @param string				$theCollection		Database name.
 	 *
 	 * @uses headerInit()
 	 * @uses mapInit()
 	 */
-	public function __construct()
+	public function __construct( string $theClient = self::kNAME_CLIENT,
+								 string $theDatabase = self::kNAME_DATABASE,
+								 string $theCollection = self::kNAME_COLLECTION )
 	{
 		//
 		// Reset members.
 		//
 		$this->headerInit();
 		$this->mapInit();
+
+		//
+		// Connect to data source.
+		//
+		$this->mClient = new Client( $theClient );
+		$this->mDatabase = $this->mClient->selectDatabase( $theDatabase );
+		$this->mCollection = $this->mDatabase->selectCollection( $theCollection );
 
 	} // Constructor.
 
@@ -674,13 +818,20 @@ class StataFile
 		// Return current value.
 		//
 		if( $theValue === NULL )
-			return $this->mPath;													// ==>
+			return ( array_key_exists( self::kOFFSET_PATH, $this->mHeader ) )
+				 ? $this->mHeader[ self::kOFFSET_PATH ]								// ==>
+				 : NULL;															// ==>
 
 		//
 		// Reset path.
 		//
 		if( $theValue === FALSE )
-			return $this->mPath = NULL;												// ==>
+		{
+			if( array_key_exists( self::kOFFSET_PATH, $this->mHeader ) )
+				unset( $this->mHeader[ self::kOFFSET_PATH ] );
+
+			return NULL;															// ==>
+		}
 
 		//
 		// Get file.
@@ -704,7 +855,9 @@ class StataFile
 				// Check extension.
 				//
 				if( strtolower( $file->getExtension() ) == 'dta' )
-					return $this->mPath = $file->getRealPath();						// ==>
+					return
+						$this->mHeader[ self::kOFFSET_PATH ]
+							= $file->getRealPath();									// ==>
 
 				//
 				// Invalid extension.
@@ -760,13 +913,20 @@ class StataFile
 		// Return current value.
 		//
 		if( $theValue === NULL )
-			return $this->mFormat;													// ==>
+			return ( array_key_exists( self::kTOKEN_FILE_RELEASE, $this->mHeader ) )
+				 ? $this->mHeader[ self::kTOKEN_FILE_RELEASE ]						// ==>
+				 : NULL;															// ==>
 
 		//
 		// Check parameter.
 		//
 		if( $theValue === FALSE )
-			return $this->mFormat = NULL;											// ==>
+		{
+			if( array_key_exists( self::kTOKEN_FILE_RELEASE, $this->mHeader ) )
+				unset( $this->mHeader[ self::kTOKEN_FILE_RELEASE ] );
+
+			return NULL;															// ==>
+		}
 
 		//
 		// Check version.
@@ -774,7 +934,9 @@ class StataFile
 		switch( $theValue )
 		{
 			case '118':
-				return $this->mFormat = (string)$theValue;							// ==>
+				return
+					$this->mHeader[ self::kTOKEN_FILE_RELEASE ]
+						= (string)$theValue;										// ==>
 		}
 
 		throw new InvalidArgumentException(
@@ -813,13 +975,20 @@ class StataFile
 		// Return current value.
 		//
 		if( $theValue === NULL )
-			return $this->mByteOrder;												// ==>
+			return ( array_key_exists( self::kTOKEN_FILE_BYTE_ORDER, $this->mHeader ) )
+				 ? $this->mHeader[ self::kTOKEN_FILE_BYTE_ORDER ]					// ==>
+				 : NULL;															// ==>
 
 		//
 		// Check parameter.
 		//
 		if( $theValue === FALSE )
-			return $this->mByteOrder = NULL;										// ==>
+		{
+			if( array_key_exists( self::kTOKEN_FILE_BYTE_ORDER, $this->mHeader ) )
+				unset( $this->mHeader[ self::kTOKEN_FILE_BYTE_ORDER ] );
+
+			return NULL;															// ==>
+		}
 
 		//
 		// Check order.
@@ -828,7 +997,9 @@ class StataFile
 		{
 			case 'MSF':
 			case 'LSF':
-				return $this->mByteOrder = strtoupper( $theValue );					// ==>
+				return
+					$this->mHeader[ self::kTOKEN_FILE_BYTE_ORDER ]
+						= strtoupper( $theValue );									// ==>
 		}
 
 		throw new InvalidArgumentException(
@@ -859,13 +1030,20 @@ class StataFile
 		// Return current value.
 		//
 		if( $theValue === NULL )
-			return $this->mNumVars;													// ==>
+			return ( array_key_exists( self::kTOKEN_FILE_VARIABLES_COUNT, $this->mHeader ) )
+				 ? $this->mHeader[ self::kTOKEN_FILE_VARIABLES_COUNT ]				// ==>
+				 : NULL;															// ==>
 
 		//
 		// Check parameter.
 		//
 		if( $theValue === FALSE )
-			return $this->mNumVars = NULL;											// ==>
+		{
+			if( array_key_exists( self::kTOKEN_FILE_VARIABLES_COUNT, $this->mHeader ) )
+				unset( $this->mHeader[ self::kTOKEN_FILE_VARIABLES_COUNT ] );
+
+			return NULL;															// ==>
+		}
 
 		//
 		// Check value.
@@ -881,12 +1059,16 @@ class StataFile
 				//
 				// Check variables count.
 				//
-				if( $theValue > 65535 )
+				if( $theValue > self::kSTATA_MAX_VARS )
 					throw new InvalidArgumentException(
 						"Invalid variables count: " .
-						"maximum value is 65535, provided [$theValue]." );		// !@! ==>
+						"maximum value is " .
+						self::kSTATA_MAX_VARS .
+						", provided [$theValue]." );							// !@! ==>
 
-				return $this->mNumVars = $theValue;									// ==>
+				return
+					$this->mHeader[ self::kTOKEN_FILE_VARIABLES_COUNT ]
+						= $theValue;												// ==>
 
 			} // Positive.
 
@@ -932,13 +1114,21 @@ class StataFile
 		// Return current value.
 		//
 		if( $theValue === NULL )
-			return $this->mNumRecs;													// ==>
+			return ( array_key_exists(
+						self::kTOKEN_FILE_OBSERVATIONS_COUNT, $this->mHeader ) )
+				 ? $this->mHeader[ self::kTOKEN_FILE_OBSERVATIONS_COUNT ]			// ==>
+				 : NULL;															// ==>
 
 		//
 		// Check parameter.
 		//
 		if( $theValue === FALSE )
-			return $this->mNumRecs = NULL;											// ==>
+		{
+			if( array_key_exists( self::kTOKEN_FILE_OBSERVATIONS_COUNT, $this->mHeader ) )
+				unset( $this->mHeader[ self::kTOKEN_FILE_OBSERVATIONS_COUNT ] );
+
+			return NULL;															// ==>
+		}
 
 		//
 		// Check value.
@@ -950,7 +1140,9 @@ class StataFile
 			//
 			$theValue = (int)$theValue;
 			if( $theValue >= 0 )
-				return $this->mNumRecs = $theValue;									// ==>
+				return
+					$this->mHeader[ self::kTOKEN_FILE_OBSERVATIONS_COUNT ]
+						= $theValue;												// ==>
 
 			//
 			// Negative.
@@ -993,13 +1185,20 @@ class StataFile
 		// Return current value.
 		//
 		if( $theValue === NULL )
-			return $this->mLabelDataset;											// ==>
+			return ( array_key_exists( self::kTOKEN_FILE_LABEL, $this->mHeader ) )
+				 ? $this->mHeader[ self::kTOKEN_FILE_LABEL ]						// ==>
+				 : NULL;															// ==>
 
 		//
 		// Reset value.
 		//
 		if( $theValue === FALSE )
-			return $this->mLabelDataset = '';										// ==>
+		{
+			if( array_key_exists( self::kTOKEN_FILE_LABEL, $this->mHeader ) )
+				unset( $this->mHeader[ self::kTOKEN_FILE_LABEL ] );
+
+			return NULL;															// ==>
+		}
 
 		//
 		// Truncate string.
@@ -1007,7 +1206,9 @@ class StataFile
 		if( mb_strlen( $theValue, 'UTF-8' ) > 80 )
 			$theValue = mb_substr( $theValue, 0, 80, 'UTF-8' );
 
-		return $this->mLabelDataset = $theValue;									// ==>
+		return
+			$this->mHeader[ self::kTOKEN_FILE_LABEL ]
+				= $theValue;														// ==>
 
 	} // DatasetLabel.
 
@@ -1033,15 +1234,24 @@ class StataFile
 		// Return current value.
 		//
 		if( $theValue === NULL )
-			return $this->mTimeStamp;												// ==>
+			return ( array_key_exists( self::kTOKEN_FILE_TIMESTAMP, $this->mHeader ) )
+				 ? $this->mHeader[ self::kTOKEN_FILE_TIMESTAMP ]					// ==>
+				 : NULL;															// ==>
 
 		//
 		// Reset value.
 		//
 		if( $theValue === FALSE )
-			return $this->mTimeStamp = NULL;										// ==>
+		{
+			if( array_key_exists( self::kTOKEN_FILE_TIMESTAMP, $this->mHeader ) )
+				unset( $this->mHeader[ self::kTOKEN_FILE_TIMESTAMP ] );
 
-		return $this->mTimeStamp = new DateTime( $theValue );						// ==>
+			return NULL;															// ==>
+		}
+
+		return
+			$this->mHeader[ self::kTOKEN_FILE_TIMESTAMP ]
+				= new DateTime( $theValue );										// ==>
 
 	} // TimeStamp.
 
@@ -1979,6 +2189,11 @@ class StataFile
 	 */
 	public function Read( string $theFile )
 	{
+		//
+		// Clear database.
+		//
+		$this->mDatabase->drop();
+
 		//
 		// Clear object.
 		//
@@ -3231,7 +3446,7 @@ class StataFile
 				//
 				// Handle fixed string.
 				//
-				if( $type[ 'type' ] <= 2045 )
+				if( $type[ 'type' ] <= self::kSTATA_TYPE_FIXED_STRING )
 				{
 					//
 					// Read data.
@@ -3257,38 +3472,38 @@ class StataFile
 					//
 					switch( $type[ 'type' ] )
 					{
-						case 32768:	// strL
+						case self::kSTATA_TYPE_LONG_STRING:	// strL
 							$var = $this->readUShort( $theFile );
 							$obs = $this->readUInt48( $theFile );
 							if( $var && $obs )
 								$record[ $name ] = [ 'v' => $var, 'o' => $obs ];
 							break;
 
-						case 65526: // double
+						case self::kSTATA_TYPE_DOUBLE: // double
 							$value = $this->readDouble( $theFile );
 							if( $value !== NULL )
 								$record[ $name ] = $value;
 							break;
 
-						case 65527: // float
+						case self::kSTATA_TYPE_FLOAT: // float
 							$value = $this->readFloat( $theFile );
 							if( $value !== NULL )
 								$record[ $name ] = $value;
 							break;
 
-						case 65528: // long
+						case self::kSTATA_TYPE_LONG: // long
 							$value = $this->readLong( $theFile );
 							if( $value !== NULL )
 								$record[ $name ] = $value;
 							break;
 
-						case 65529: // int
+						case self::kSTATA_TYPE_SHORT: // int
 							$value = $this->readInt( $theFile );
 							if( $value !== NULL )
 								$record[ $name ] = $value;
 							break;
 
-						case 65530: // byte
+						case self::kSTATA_TYPE_BYTE: // byte
 							$value = $this->readByte( $theFile );
 							if( $value !== NULL )
 								$record[ $name ] = $value;
@@ -3310,7 +3525,11 @@ class StataFile
 			// Add observation.
 			//
 			if( count( $record ) )
-				$this->mData[ $element ] = $record;
+			{
+				$record[ '_id' ] = $element;
+				$this->mCollection->insertOne( $record );
+			}
+//				$this->mData[ $element ] = $record;
 
 		} // Scanning observations.
 
@@ -3362,7 +3581,7 @@ class StataFile
 				//
 				// Handle fixed string.
 				//
-				if( $type[ 'type' ] <= 2045 )
+				if( $type[ 'type' ] <= self::kSTATA_TYPE_FIXED_STRING )
 					$this->writeCString(
 						$theFile,
 						$type[ 'type' ],
@@ -3380,7 +3599,7 @@ class StataFile
 					//
 					switch( $type[ 'type' ] )
 					{
-						case 32768:	// strL
+						case self::kSTATA_TYPE_LONG_STRING:	// strL
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 							{
 								$hash = md5( $record[ $type[ self::kOFFSET_NAME ] ] );
@@ -3399,29 +3618,29 @@ class StataFile
 							}
 							break;
 
-						case 65526: // double
+						case self::kSTATA_TYPE_DOUBLE: // double
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 								$this->writeDouble(
 									$theFile,
 									(double)$record[ $type[ self::kOFFSET_NAME ] ] );
-							elseif( $this->mByteOrder == 'MSF' )
+							elseif( $this->ByteOrder() == 'MSF' )
 								$theFile->fwrite( hex2bin( '7fe0000000000000' ) );
 							else
 								$theFile->fwrite( hex2bin( '000000000000e07f' ) );
 							break;
 
-						case 65527: // float
+						case self::kSTATA_TYPE_FLOAT: // float
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 								$this->writeFloat(
 									$theFile,
 									(float)$record[ $type[ self::kOFFSET_NAME ] ] );
-							elseif( $this->mByteOrder == 'MSF' )
+							elseif( $this->ByteOrder() == 'MSF' )
 								$theFile->fwrite( hex2bin( '7f000000' ) );
 							else
 								$theFile->fwrite( hex2bin( '0000007f' ) );
 							break;
 
-						case 65528: // long
+						case self::kSTATA_TYPE_LONG: // long
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 								$value = $record[ $type[ self::kOFFSET_NAME ] ];
 							else
@@ -3429,7 +3648,7 @@ class StataFile
 							$this->writeLong( $theFile, $value );
 							break;
 
-						case 65529: // int
+						case self::kSTATA_TYPE_SHORT: // int
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 								$value = $record[ $type[ self::kOFFSET_NAME ] ];
 							else
@@ -3437,7 +3656,7 @@ class StataFile
 							$this->writeInt( $theFile, $value );
 							break;
 
-						case 65530: // byte
+						case self::kSTATA_TYPE_BYTE: // byte
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 								$this->writeByte(
 									$theFile, $record[ $type[ self::kOFFSET_NAME ] ] );
@@ -3643,7 +3862,7 @@ class StataFile
 		$variables = [];
 		foreach( $this->mDict as $variable => $type )
 		{
-			if( $type[ self::kOFFSET_TYPE ] == 32768 )
+			if( $type[ self::kOFFSET_TYPE ] == self::kSTATA_TYPE_LONG_STRING )
 				$variables[ $variable ] = $type[ self::kOFFSET_NAME ];
 		}
 
@@ -5484,7 +5703,7 @@ class StataFile
 			//
 			// Handle string.
 			//
-			if( $theValue <= 2045 )
+			if( $theValue <= self::kSTATA_TYPE_FIXED_STRING )
 				return "str$theValue";												// ==>
 
 			//
@@ -5492,22 +5711,22 @@ class StataFile
 			//
 			switch( $theValue )
 			{
-				case 32768:
+				case self::kSTATA_TYPE_LONG_STRING:
 					return "strL";													// ==>
 
-				case 65526:
+				case self::kSTATA_TYPE_DOUBLE:
 					return "double";												// ==>
 
-				case 65527:
+				case self::kSTATA_TYPE_FLOAT:
 					return "float";													// ==>
 
-				case 65528:
+				case self::kSTATA_TYPE_LONG:
 					return "long";													// ==>
 
-				case 65529:
+				case self::kSTATA_TYPE_SHORT:
 					return "int";													// ==>
 
-				case 65530:
+				case self::kSTATA_TYPE_BYTE:
 					return "byte";													// ==>
 
 				default:
@@ -5532,7 +5751,7 @@ class StataFile
 			// Handle long string.
 			//
 			if( $type == 'L' )
-				return 32768;														// ==>
+				return self::kSTATA_TYPE_LONG_STRING;														// ==>
 
 			//
 			// Handle fixed string.
@@ -5543,7 +5762,7 @@ class StataFile
 				// Check type.
 				//
 				$type = (int)$type;
-				if( $type > 2045 )
+				if( $type > self::kSTATA_TYPE_FIXED_STRING )
 					throw new InvalidArgumentException(
 						"Invalid type [$theValue]" );							// !@! ==>
 
@@ -5565,19 +5784,19 @@ class StataFile
 		switch( $theValue )
 		{
 			case 'double':
-				return 65526;														// ==>
+				return self::kSTATA_TYPE_DOUBLE;														// ==>
 
 			case 'float':
-				return 65527;														// ==>
+				return self::kSTATA_TYPE_FLOAT;														// ==>
 
 			case 'long':
-				return 65528;														// ==>
+				return self::kSTATA_TYPE_LONG;														// ==>
 
 			case 'int':
-				return 65529;														// ==>
+				return self::kSTATA_TYPE_SHORT;														// ==>
 
 			case 'byte':
-				return 65530;														// ==>
+				return self::kSTATA_TYPE_BYTE;														// ==>
 
 			default:
 				throw new InvalidArgumentException(
@@ -5635,7 +5854,7 @@ class StataFile
 		//
 		// Handle fixed length string.
 		//
-		if( $theValue <= 2045 )
+		if( $theValue <= self::kSTATA_TYPE_FIXED_STRING )
 			return $theValue;														// ==>
 
 		//
@@ -5643,18 +5862,18 @@ class StataFile
 		//
 		switch( $theValue )
 		{
-			case 32768:	// strL
-			case 65526:	// double
+			case self::kSTATA_TYPE_LONG_STRING:
+			case self::kSTATA_TYPE_DOUBLE:
 				return 8;															// ==>
 
-			case 65527:	// float
-			case 65528:	// long
+			case self::kSTATA_TYPE_FLOAT:
+			case self::kSTATA_TYPE_LONG:
 				return 4;															// ==>
 
-			case 65529:	// int
+			case self::kSTATA_TYPE_SHORT:
 				return 2;															// ==>
 
-			case 65530:	// byte
+			case self::kSTATA_TYPE_BYTE:
 				return 1;															// ==>
 
 			default:
