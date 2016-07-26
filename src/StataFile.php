@@ -36,7 +36,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_OPEN = 'stata_dta';
+	const kTOKEN_FILE_OPEN = 'stata_dta';
 
 	/**
 	 * <h4>Header marker.</h4>
@@ -45,7 +45,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_HEADER = 'header';
+	const kTOKEN_FILE_HEADER = 'header';
 
 	/**
 	 * <h4>Release marker.</h4>
@@ -54,7 +54,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_HEADER_RELEASE = 'release';
+	const kTOKEN_FILE_RELEASE = 'release';
 
 	/**
 	 * <h4>Byte order marker.</h4>
@@ -63,7 +63,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_HEADER_ORDER = 'byteorder';
+	const kTOKEN_FILE_BYTE_ORDER = 'byteorder';
 
 	/**
 	 * <h4>Variables count marker.</h4>
@@ -72,7 +72,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_HEADER_VARS = 'K';
+	const kTOKEN_FILE_VARIABLES_COUNT = 'K';
 
 	/**
 	 * <h4>Observations count marker.</h4>
@@ -81,7 +81,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_HEADER_RECS = 'N';
+	const kTOKEN_FILE_OBSERVATIONS_COUNT = 'N';
 
 	/**
 	 * <h4>Dataset label marker.</h4>
@@ -90,7 +90,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_HEADER_LABEL = 'label';
+	const kTOKEN_FILE_LABEL = 'label';
 
 	/**
 	 * <h4>Dataset time stamp marker.</h4>
@@ -99,7 +99,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_HEADER_STAMP = 'timestamp';
+	const kTOKEN_FILE_TIMESTAMP = 'timestamp';
 
 	/**
 	 * <h4>Dataset map marker.</h4>
@@ -108,7 +108,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_MAP = 'map';
+	const kTOKEN_FILE_MAP = 'map';
 
 	/**
 	 * <h4>Dataset variable types marker.</h4>
@@ -117,7 +117,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_TYPES = 'variable_types';
+	const kTOKEN_FILE_VARIABLE_TYPES = 'variable_types';
 
 	/**
 	 * <h4>Dataset variable names marker.</h4>
@@ -126,7 +126,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_NAMES = 'varnames';
+	const kTOKEN_FILE_VARIABLE_NAMES = 'varnames';
 
 	/**
 	 * <h4>Dataset sort list marker.</h4>
@@ -135,7 +135,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_SORT = 'sortlist';
+	const kTOKEN_FILE_SORT = 'sortlist';
 
 	/**
 	 * <h4>Dataset formats list marker.</h4>
@@ -144,7 +144,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_FORMATS = 'formats';
+	const kTOKEN_FILE_FORMATS = 'formats';
 
 	/**
 	 * <h4>Dataset value labels marker.</h4>
@@ -153,7 +153,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_VALABNAMES = 'value_label_names';
+	const kTOKEN_FILE_VALUE_LABEL_NAMES = 'value_label_names';
 
 	/**
 	 * <h4>Dataset variable labels marker.</h4>
@@ -162,7 +162,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_VARLABEL = 'variable_labels';
+	const kTOKEN_FILE_VARIABLE_LABELS = 'variable_labels';
 
 	/**
 	 * <h4>Dataset characteristics marker.</h4>
@@ -171,7 +171,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_CHARACTERISTICS = 'characteristics';
+	const kTOKEN_FILE_CHARACTERISTICS = 'characteristics';
 
 	/**
 	 * <h4>Dataset characteristics element marker.</h4>
@@ -180,7 +180,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_CHARACTERISTICS_ELM = 'ch';
+	const kTOKEN_FILE_CHARACTERISTIC_ELEMENT = 'ch';
 
 	/**
 	 * <h4>Dataset data marker.</h4>
@@ -189,7 +189,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_DATA = 'data';
+	const kTOKEN_FILE_DATA = 'data';
 
 	/**
 	 * <h4>Dataset long strings marker.</h4>
@@ -198,7 +198,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_LSTRING = 'strls';
+	const kTOKEN_FILE_LONG_STRINGS = 'strls';
 
 	/**
 	 * <h4>Dataset value labels marker.</h4>
@@ -207,7 +207,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_VALLABEL = 'value_labels';
+	const kTOKEN_FILE_VALUE_LABELS = 'value_labels';
 
 	/**
 	 * <h4>Dataset value lables element marker.</h4>
@@ -216,25 +216,7 @@ class StataFile
 	 *
 	 * @var string
 	 */
-	const kTOKEN_DATASET_VALLABEL_ELM = 'lbl';
-
-	/**
-	 * <h4>Dataset close token.</h4>
-	 *
-	 * This constant holds the <em>dataset close token</em>.
-	 *
-	 * @var string
-	 */
-	const kTOKEN_CLOSE = 'CLOSE';
-
-	/**
-	 * <h4>Dataset end of file token.</h4>
-	 *
-	 * This constant holds the <em>dataset end of file token</em>.
-	 *
-	 * @var string
-	 */
-	const kTOKEN_EOF = 'EOF';
+	const kTOKEN_FILE_VALUE_LABEL_ELEMENT = 'lbl';
 
 	/**
 	 * <h4>Variable name offset.</h4>
@@ -329,6 +311,132 @@ class StataFile
 	 * @var string
 	 */
 	const kOFFSET_CHARS_DATA = 'data';
+
+	/**
+	 * <h4>Map open index.</h4>
+	 *
+	 * This constant holds the <em>index to the map opening token offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_OPEN = 0;
+
+	/**
+	 * <h4>Map map index.</h4>
+	 *
+	 * This constant holds the <em>index to the map map offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_MAP = 1;
+
+	/**
+	 * <h4>Map types index.</h4>
+	 *
+	 * This constant holds the <em>index to the map types offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_TYPES = 2;
+
+	/**
+	 * <h4>Map names index.</h4>
+	 *
+	 * This constant holds the <em>index to the map names offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_NAMES = 3;
+
+	/**
+	 * <h4>Map sort index.</h4>
+	 *
+	 * This constant holds the <em>index to the map sort offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_SORT = 4;
+
+	/**
+	 * <h4>Map formats index.</h4>
+	 *
+	 * This constant holds the <em>index to the map formats offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_FORMATS = 5;
+
+	/**
+	 * <h4>Map value label names index.</h4>
+	 *
+	 * This constant holds the <em>index to the map value label names offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_VALUE_LABEL_NAMES = 6;
+
+	/**
+	 * <h4>Map variable labels index.</h4>
+	 *
+	 * This constant holds the <em>index to the map variable labels offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_VARIABLE_LABELS = 7;
+
+	/**
+	 * <h4>Map characteristics index.</h4>
+	 *
+	 * This constant holds the <em>index to the map characteristics offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_CHARACTERISTICS = 8;
+
+	/**
+	 * <h4>Map data index.</h4>
+	 *
+	 * This constant holds the <em>index to the map data offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_DATA = 9;
+
+	/**
+	 * <h4>Map long strings index.</h4>
+	 *
+	 * This constant holds the <em>index to the map long strings offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_LONG_STRINGS = 10;
+
+	/**
+	 * <h4>Map value labels index.</h4>
+	 *
+	 * This constant holds the <em>index to the map value labels offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_VALUE_LABELS = 11;
+
+	/**
+	 * <h4>Map close index.</h4>
+	 *
+	 * This constant holds the <em>index to the map closing token offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_CLOSE = 12;
+
+	/**
+	 * <h4>Map end of file index.</h4>
+	 *
+	 * This constant holds the <em>index to the map end of file offset</em>.
+	 *
+	 * @var int
+	 */
+	const kMAP_EOF = 13;
 
 	/**
 	 * <h4>File path.</h4>
@@ -1939,88 +2047,88 @@ class StataFile
 		// Write header.
 		//
 		$this->headerWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_MAP ] = $file->ftell();
+		$this->mMap[ self::kMAP_MAP ] = $file->ftell();
 
 		//
 		// Write map.
 		//
 		$this->mapWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_TYPES ] = $file->ftell();
+		$this->mMap[ self::kMAP_TYPES ] = $file->ftell();
 
 		//
 		// Write types.
 		//
 		$this->typesWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_NAMES ] = $file->ftell();
+		$this->mMap[ self::kMAP_NAMES ] = $file->ftell();
 
 		//
 		// Write names.
 		//
 		$this->namesWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_SORT ] = $file->ftell();
+		$this->mMap[ self::kMAP_SORT ] = $file->ftell();
 
 		//
 		// Write sort order.
 		//
 		$this->sortWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_FORMATS ] = $file->ftell();
+		$this->mMap[ self::kMAP_FORMATS ] = $file->ftell();
 
 		//
 		// Write formats.
 		//
 		$this->formatWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_VALABNAMES ] = $file->ftell();
+		$this->mMap[ self::kMAP_VALUE_LABEL_NAMES ] = $file->ftell();
 
 		//
 		// Write value label names.
 		//
 		$this->valueLabelWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_VARLABEL ] = $file->ftell();
+		$this->mMap[ self::kMAP_VARIABLE_LABELS ] = $file->ftell();
 
 		//
 		// Write labels.
 		//
 		$this->labelWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_CHARACTERISTICS ] = $file->ftell();
+		$this->mMap[ self::kMAP_CHARACTERISTICS ] = $file->ftell();
 
 		//
 		// Write characteristics.
 		//
 		$this->characteristicsWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_DATA ] = $file->ftell();
+		$this->mMap[ self::kMAP_DATA ] = $file->ftell();
 
 		//
 		// Write data.
 		//
 		$this->dataWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_LSTRING ] = $file->ftell();
+		$this->mMap[ self::kMAP_LONG_STRINGS ] = $file->ftell();
 
 		//
 		// Write strings.
 		//
 		$this->stringsWrite( $file );
-		$this->mMap[ self::kTOKEN_DATASET_VALLABEL ] = $file->ftell();
+		$this->mMap[ self::kMAP_VALUE_LABELS ] = $file->ftell();
 
 		//
 		// Write enumerations.
 		//
 		$this->enumsWrite( $file );
-		$this->mMap[ self::kTOKEN_CLOSE ] = $file->ftell();
+		$this->mMap[ self::kMAP_CLOSE ] = $file->ftell();
 
 		//
 		// Write close token.
 		//
-		$this->writeToken( $file, self::kTOKEN_DATASET_OPEN, TRUE );
-		$this->mMap[ self::kTOKEN_EOF ] = $file->ftell();
+		$this->writeToken( $file, self::kTOKEN_FILE_OPEN, TRUE );
+		$this->mMap[ self::kMAP_EOF ] = $file->ftell();
 
 		//
 		// Write map.
 		//
-		$file->fseek( $this->mMap[ self::kTOKEN_DATASET_MAP ] );
-		$this->writeToken( $file, self::kTOKEN_DATASET_MAP, FALSE );
+		$file->fseek( $this->mMap[ self::kMAP_MAP ] );
+		$this->writeToken( $file, self::kTOKEN_FILE_MAP, FALSE );
 		foreach( $this->mMap as $offset )
 			$this->writeUInt64( $file, $offset );
-		$this->writeToken( $file, self::kTOKEN_DATASET_MAP, TRUE );
+		$this->writeToken( $file, self::kTOKEN_FILE_MAP, TRUE );
 
 		return $file;																// ==>
 
@@ -2107,59 +2215,59 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_OPEN, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_OPEN, FALSE );
 
 		//
 		// Get opening header token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_HEADER, FALSE );
 
 		//
 		// Get release.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER_RELEASE, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_RELEASE, FALSE );
 		$this->Format( $theFile->fread( 3 ) );
-		$this->readToken( $theFile, self::kTOKEN_HEADER_RELEASE, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_RELEASE, TRUE );
 
 		//
 		// Get byte order.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER_ORDER, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_BYTE_ORDER, FALSE );
 		$this->ByteOrder( $theFile->fread( 3 ) );
-		$this->readToken( $theFile, self::kTOKEN_HEADER_ORDER, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_BYTE_ORDER, TRUE );
 
 		//
 		// Get variables count.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER_VARS, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLES_COUNT, FALSE );
 		$this->VariablesCount( $this->readUShort( $theFile ) );
-		$this->readToken( $theFile, self::kTOKEN_HEADER_VARS, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLES_COUNT, TRUE );
 
 		//
 		// Get observations count.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER_RECS, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_OBSERVATIONS_COUNT, FALSE );
 		$this->ObservationsCount( $this->readUInt64( $theFile ) );
-		$this->readToken( $theFile, self::kTOKEN_HEADER_RECS, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_OBSERVATIONS_COUNT, TRUE );
 
 		//
 		// Get dataset label.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER_LABEL, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_LABEL, FALSE );
 		$this->DatasetLabel( $this->readBString( $theFile ) );
-		$this->readToken( $theFile, self::kTOKEN_HEADER_LABEL, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_LABEL, TRUE );
 
 		//
 		// Get dataset time stamp.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER_STAMP, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_TIMESTAMP, FALSE );
 		$this->TimeStamp( $this->readTimeStamp( $theFile ) );
-		$this->readToken( $theFile, self::kTOKEN_HEADER_STAMP, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_TIMESTAMP, TRUE );
 
 		//
 		// Get closing header token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_HEADER, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_HEADER, TRUE );
 
 	} // headerRead.
 
@@ -2205,65 +2313,65 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_OPEN, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_OPEN, FALSE );
 
 		//
 		// Write opening header token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_HEADER, FALSE );
 
 		//
 		// Write release.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_RELEASE, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_RELEASE, FALSE );
 		$ok = $theFile->fwrite( $this->Format() );
 		if( $ok === NULL )
 			throw new RuntimeException(
 				"Unable to write dataset format." );							// !@! ==>
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_RELEASE, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_RELEASE, TRUE );
 
 		//
 		// Write byte order.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_ORDER, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_BYTE_ORDER, FALSE );
 		$ok = $theFile->fwrite( $this->ByteOrder() );
 		if( $ok === NULL )
 			throw new RuntimeException(
 				"Unable to write dataset byte order." );						// !@! ==>
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_ORDER, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_BYTE_ORDER, TRUE );
 
 		//
 		// Write variables count.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_VARS, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLES_COUNT, FALSE );
 		$this->writeUShort( $theFile, $this->VariablesCount() );
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_VARS, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLES_COUNT, TRUE );
 
 		//
 		// Write observations count.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_RECS, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_OBSERVATIONS_COUNT, FALSE );
 		$this->writeUInt64( $theFile, $this->ObservationsCount() );
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_RECS, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_OBSERVATIONS_COUNT, TRUE );
 
 		//
 		// Write dataset label.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_LABEL, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_LABEL, FALSE );
 		$this->writeBString( $theFile, $this->DatasetLabel() );
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_LABEL, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_LABEL, TRUE );
 
 		//
 		// Write dataset time stamp.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_STAMP, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_TIMESTAMP, FALSE );
 		$this->writeTimeStamp( $theFile );
-		$this->writeToken( $theFile, self::kTOKEN_HEADER_STAMP, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_TIMESTAMP, TRUE );
 
 		//
 		// Write closing header token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_HEADER, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_HEADER, TRUE );
 
 	} // headerWrite.
 
@@ -2293,20 +2401,20 @@ class StataFile
 		// Init map.
 		//
 		$this->mMap = [
-			self::kTOKEN_DATASET_OPEN			 => 0,
-			self::kTOKEN_DATASET_MAP			 => 0,
-			self::kTOKEN_DATASET_TYPES			 => 0,
-			self::kTOKEN_DATASET_NAMES			 => 0,
-			self::kTOKEN_DATASET_SORT			 => 0,
-			self::kTOKEN_DATASET_FORMATS		 => 0,
-			self::kTOKEN_DATASET_VALABNAMES		 => 0,
-			self::kTOKEN_DATASET_VARLABEL		 => 0,
-			self::kTOKEN_DATASET_CHARACTERISTICS => 0,
-			self::kTOKEN_DATASET_DATA			 => 0,
-			self::kTOKEN_DATASET_LSTRING		 => 0,
-			self::kTOKEN_DATASET_VALLABEL		 => 0,
-			self::kTOKEN_CLOSE					 => 0,
-			self::kTOKEN_EOF					 => 0
+			self::kMAP_OPEN			 		=> 0,
+			self::kMAP_MAP			 		=> 0,
+			self::kMAP_TYPES				=> 0,
+			self::kMAP_NAMES				=> 0,
+			self::kMAP_SORT					=> 0,
+			self::kMAP_FORMATS		 		=> 0,
+			self::kMAP_VALUE_LABEL_NAMES	=> 0,
+			self::kMAP_VARIABLE_LABELS		=> 0,
+			self::kMAP_CHARACTERISTICS		=> 0,
+			self::kMAP_DATA					=> 0,
+			self::kMAP_LONG_STRINGS			=> 0,
+			self::kMAP_VALUE_LABELS			=> 0,
+			self::kMAP_CLOSE				=> 0,
+			self::kMAP_EOF					=> 0
 		];
 
 	} // mapInit.
@@ -2329,7 +2437,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_MAP, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_MAP, FALSE );
 
 		//
 		// Get file offsets.
@@ -2341,7 +2449,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_MAP, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_MAP, TRUE );
 
 	} // mapRead.
 
@@ -2363,7 +2471,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_MAP, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_MAP, FALSE );
 
 		//
 		// Write file offsets.
@@ -2374,7 +2482,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_MAP, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_MAP, TRUE );
 
 	} // mapWrite.
 
@@ -2417,7 +2525,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_TYPES, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLE_TYPES, FALSE );
 
 		//
 		// Get types.
@@ -2435,7 +2543,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_TYPES, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLE_TYPES, TRUE );
 
 	} // typesRead.
 
@@ -2457,7 +2565,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_TYPES, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLE_TYPES, FALSE );
 
 		//
 		// Write types.
@@ -2469,7 +2577,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_TYPES, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLE_TYPES, TRUE );
 
 	} // typesWrite.
 
@@ -2491,7 +2599,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_NAMES, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLE_NAMES, FALSE );
 
 		//
 		// Get names.
@@ -2509,7 +2617,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_NAMES, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLE_NAMES, TRUE );
 
 	} // namesRead.
 
@@ -2531,7 +2639,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_NAMES, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLE_NAMES, FALSE );
 
 		//
 		// Write names.
@@ -2543,7 +2651,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_NAMES, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLE_NAMES, TRUE );
 
 	} // namesWrite.
 
@@ -2565,7 +2673,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_SORT, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_SORT, FALSE );
 
 		//
 		// Iterate sort order.
@@ -2603,7 +2711,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_SORT, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_SORT, TRUE );
 
 	} // sortRead.
 
@@ -2625,7 +2733,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_SORT, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_SORT, FALSE );
 
 		//
 		// Get sort orders.
@@ -2658,7 +2766,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_SORT, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_SORT, TRUE );
 
 	} // sortWrite.
 
@@ -2680,7 +2788,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_FORMATS, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_FORMATS, FALSE );
 
 		//
 		// Iterate formats.
@@ -2691,7 +2799,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_FORMATS, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_FORMATS, TRUE );
 
 	} // formatRead.
 
@@ -2713,7 +2821,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_FORMATS, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_FORMATS, FALSE );
 
 		//
 		// Iterate formats.
@@ -2726,7 +2834,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_FORMATS, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_FORMATS, TRUE );
 
 	} // formatWrite.
 
@@ -2753,7 +2861,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VALUE_LABEL_NAMES, FALSE );
 
 		//
 		// Iterate labels.
@@ -2778,7 +2886,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VALUE_LABEL_NAMES, TRUE );
 
 	} // valueLabelRead.
 
@@ -2800,7 +2908,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VALUE_LABEL_NAMES, FALSE );
 
 		//
 		// Iterate labels.
@@ -2813,7 +2921,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALABNAMES, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VALUE_LABEL_NAMES, TRUE );
 
 	} // valueLabelWrite.
 
@@ -2835,7 +2943,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_VARLABEL, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLE_LABELS, FALSE );
 
 		//
 		// Iterate labels.
@@ -2846,7 +2954,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_VARLABEL, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VARIABLE_LABELS, TRUE );
 
 	} // labelRead.
 
@@ -2868,7 +2976,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_VARLABEL, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLE_LABELS, FALSE );
 
 		//
 		// Iterate labels.
@@ -2879,7 +2987,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_VARLABEL, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLE_LABELS, TRUE );
 
 	} // labelWrite.
 
@@ -2907,7 +3015,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_CHARACTERISTICS, FALSE );
 
 		//
 		// Iterate characteristics.
@@ -3021,7 +3129,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_CHARACTERISTICS, FALSE );
 
 		//
 		// Iterate characteristics.
@@ -3031,7 +3139,7 @@ class StataFile
 			//
 			// Open element.
 			//
-			$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS_ELM, FALSE );
+			$this->writeToken( $theFile, self::kTOKEN_FILE_CHARACTERISTIC_ELEMENT, FALSE );
 
 			//
 			// Write element size.
@@ -3059,14 +3167,14 @@ class StataFile
 			//
 			// Close element.
 			//
-			$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS_ELM, TRUE );
+			$this->writeToken( $theFile, self::kTOKEN_FILE_CHARACTERISTIC_ELEMENT, TRUE );
 
 		} // Iterating characteristics.
 
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_CHARACTERISTICS, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_CHARACTERISTICS, TRUE );
 
 	} // characteristicsWrite.
 
@@ -3093,7 +3201,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_DATA, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_DATA, FALSE );
 
 		//
 		// Build variables list.
@@ -3209,7 +3317,7 @@ class StataFile
 		//
 		// Get closing token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_DATA, TRUE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_DATA, TRUE );
 
 	} // dataRead.
 
@@ -3231,9 +3339,14 @@ class StataFile
 	protected function dataWrite( SplFileObject $theFile )
 	{
 		//
+		// Init local storage.
+		//
+		$strings = [];
+
+		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_DATA, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_DATA, FALSE );
 
 		//
 		// Iterate observations.
@@ -3271,8 +3384,13 @@ class StataFile
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 							{
 								$hash = md5( $record[ $type[ self::kOFFSET_NAME ] ] );
-								$this->writeUShort( $theFile, $variable );
-								$this->writeUInt48( $theFile, $observation );
+								if( ! array_key_exists( $hash, $strings ) )
+									$strings[ $hash ] = [
+										'v' => $variable + 1,
+										'o' => $observation
+									];
+								$this->writeUShort( $theFile, $strings[ $hash ][ 'v' ] );
+								$this->writeUInt48( $theFile, $strings[ $hash ][ 'o' ] );
 							}
 							else
 							{
@@ -3321,10 +3439,10 @@ class StataFile
 
 						case 65530: // byte
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$value = $record[ $type[ self::kOFFSET_NAME ] ];
+								$this->writeByte(
+									$theFile, $record[ $type[ self::kOFFSET_NAME ] ] );
 							else
-								$value = 101;
-							$this->writeByte( $theFile, $value );
+								$theFile->fwrite( hex2bin( '65' ), 1 );
 							break;
 
 						default:
@@ -3349,7 +3467,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_DATA, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_DATA, TRUE );
 
 	} // dataWrite.
 
@@ -3376,7 +3494,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_LSTRING, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_LONG_STRINGS, FALSE );
 
 		//
 		// Iterate strings.
@@ -3510,9 +3628,14 @@ class StataFile
 	protected function stringsWrite( SplFileObject $theFile )
 	{
 		//
+		// Init local storage.
+		//
+		$strings = [];
+
+		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_LSTRING, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_LONG_STRINGS, FALSE );
 
 		//
 		// Build variables list.
@@ -3540,35 +3663,32 @@ class StataFile
 				if( array_key_exists( $name, $record ) )
 				{
 					//
-					// Write GSO.
+					// Init local storage.
 					//
-					$theFile->fwrite( 'GSO', 3 );
+					$string = $record[ $name ];
+					$hash = md5( $string );
 
 					//
-					// Write variable.
+					// Check string.
 					//
-					$this->writeUInt32( $theFile, $variable );
+					if( ! array_key_exists( $hash, $strings ) )
+					{
+						//
+						// Save string.
+						//
+						$strings[ $hash ] = [ 'v' => $variable + 1, 'o' => $observation ];
 
-					//
-					// Write observation.
-					//
-					$this->writeUInt64( $theFile, $observation );
+						//
+						// Write data.
+						//
+						$theFile->fwrite( 'GSO', 3 );
+						$this->writeUInt32( $theFile, $strings[ $hash ][ 'v' ] );
+						$this->writeUInt64( $theFile, $strings[ $hash ][ 'o' ] );
+						$theFile->fwrite( hex2bin( '81' ), 1 );
+						$this->writeUInt32( $theFile, mb_strlen( $string, '8bit' ) );
+						$theFile->fwrite( $string, mb_strlen( $string, '8bit' ) );
 
-					//
-					// Write type.
-					//
-					$theFile->fwrite( hex2bin( '81' ), 1 );
-
-					//
-					// Write length.
-					//
-					$this->writeUInt32( $theFile, mb_strlen( $record[ $name ], '8bit' ) );
-
-					//
-					// Write string.
-					//
-					$theFile->fwrite(
-						$record[ $name ], mb_strlen( $record[ $name ], '8bit' ) );
+					} // New string.
 
 				} // Has long string.
 
@@ -3579,7 +3699,7 @@ class StataFile
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_LSTRING, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_LONG_STRINGS, TRUE );
 
 	} // stringsWrite.
 
@@ -3601,7 +3721,7 @@ class StataFile
 		//
 		// Get opening token.
 		//
-		$this->readToken( $theFile, self::kTOKEN_DATASET_VALLABEL, FALSE );
+		$this->readToken( $theFile, self::kTOKEN_FILE_VALUE_LABELS, FALSE );
 
 		//
 		// Iterate enumerations.
@@ -3757,7 +3877,7 @@ class StataFile
 		//
 		// Write opening token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL, FALSE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VALUE_LABELS, FALSE );
 
 		//
 		// Iterate characteristics.
@@ -3792,6 +3912,7 @@ class StataFile
 			//
 			// Init key and offset tables.
 			//
+			$table[ 'siz' ] = [];
 			$table[ 'off' ] = [];
 			$table[ 'key' ] = [];
 
@@ -3815,9 +3936,11 @@ class StataFile
 				// Load offsets, keys and string.
 				//
 				$table[ 'txt' ] .= "$value\0";
-				$table[ 'key' ] = $key;
+				$table[ 'siz' ][ $i ] = $length;
+				$table[ 'key' ][ $i ] = $key;
 				$table[ 'off' ][ $i ] = ( $i )
-									  ? $table[ 'off' ][ $i - 1 ] + $length
+									  ? $table[ 'off' ][ $i - 1 ] +
+										$table[ 'siz' ][ $i - 1 ]
 									  : 0;
 
 				//
@@ -3832,7 +3955,7 @@ class StataFile
 			//
 			// Open element.
 			//
-			$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL_ELM, FALSE );
+			$this->writeToken( $theFile, self::kTOKEN_FILE_VALUE_LABEL_ELEMENT, FALSE );
 
 			//
 			// Write table length.
@@ -3879,14 +4002,14 @@ class StataFile
 			//
 			// Close element.
 			//
-			$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL_ELM, TRUE );
+			$this->writeToken( $theFile, self::kTOKEN_FILE_VALUE_LABEL_ELEMENT, TRUE );
 
 		} // Iterating characteristics.
 
 		//
 		// Write closing token.
 		//
-		$this->writeToken( $theFile, self::kTOKEN_DATASET_VALLABEL, TRUE );
+		$this->writeToken( $theFile, self::kTOKEN_FILE_VALUE_LABELS, TRUE );
 
 	} // enumsWrite.
 
