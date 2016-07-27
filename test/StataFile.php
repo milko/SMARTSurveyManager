@@ -31,7 +31,7 @@ echo( "\n=======================================================================
 // Read file.
 //
 echo( '$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );' . "\n" );
-$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );
+$result = $test->Read( kPATH_LIBRARY_ROOT . "test/LARGE.dta" );
 var_dump( $result->getRealPath() );
 print_r( $test );
 

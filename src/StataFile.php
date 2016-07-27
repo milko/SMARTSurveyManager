@@ -560,6 +560,69 @@ class StataFile
 	const kNAME_COLLECTION = 'data';
 
 	/**
+	 * <h4>File path tag.</h4>
+	 *
+	 * This constant holds the <em>file path tag</em>.
+	 *
+	 * @var string
+	 */
+	const kTAG_PATH = 'path';
+
+	/**
+	 * <h4>Header tag.</h4>
+	 *
+	 * This constant holds the <em>file header tag</em>.
+	 *
+	 * @var string
+	 */
+	const kTAG_HEADER = 'head';
+
+	/**
+	 * <h4>Map tag.</h4>
+	 *
+	 * This constant holds the <em>file map tag</em>.
+	 *
+	 * @var string
+	 */
+	const kTAG_MAP = 'fmap';
+
+	/**
+	 * <h4>Data dictionary tag.</h4>
+	 *
+	 * This constant holds the <em>data dictionary tag</em>.
+	 *
+	 * @var string
+	 */
+	const kTAG_DICT = 'dict';
+
+	/**
+	 * <h4>Enumerations tag.</h4>
+	 *
+	 * This constant holds the <em>enumerations tag</em>.
+	 *
+	 * @var string
+	 */
+	const kTAG_ENUM = 'enum';
+
+	/**
+	 * <h4>Characteristics tag.</h4>
+	 *
+	 * This constant holds the <em>characteristics tag</em>.
+	 *
+	 * @var string
+	 */
+	const kTAG_CHAR = 'char';
+
+	/**
+	 * <h4>Buffer size.</h4>
+	 *
+	 * This constant holds the <em>data buffer size</em>.
+	 *
+	 * @var int
+	 */
+	const kBUFFER_SIZE = 256;
+
+	/**
 	 * <h4>Dataset header.</h4>
 	 *
 	 * This data member holds the <em>dataset header</em>, it is an array structured as
@@ -679,29 +742,14 @@ class StataFile
 	protected $mChars = [];
 
 	/**
-	 * <h4>Strings.</h4>
+	 * <h4>Buffer.</h4>
 	 *
-	 * This data member holds the <em>long strings</em>, it is an array structured as
-	 * follows:
-	 *
-	 * <ul>
-	 * 	<li><i>index</i>: The MD5 hash of the string.
-	 * 	<li><i>value</i>: The string
-	 * </ul>
+	 * This data member holds the data buffer, it will be flushed when the number of entries
+	 * exceeds {@link kBUFFER_SIZE}.
 	 *
 	 * @var array
 	 */
-	protected $mStrings = [];
-
-	/**
-	 * <h4>Data.</h4>
-	 *
-	 * This data member holds the dataset <em>data</em>, it is an associative array holding
-	 * the variable names and values.
-	 *
-	 * @var array
-	 */
-	protected $mData = [];
+	protected $mBuffer = [];
 
 	/**
 	 * <h4>Client connection.</h4>
@@ -764,17 +812,26 @@ class StataFile
 								 string $theCollection = self::kNAME_COLLECTION )
 	{
 		//
-		// Reset members.
-		//
-		$this->headerInit();
-		$this->mapInit();
-
-		//
 		// Connect to data source.
 		//
 		$this->mClient = new Client( $theClient );
 		$this->mDatabase = $this->mClient->selectDatabase( $theDatabase );
 		$this->mCollection = $this->mDatabase->selectCollection( $theCollection );
+
+		//
+		// Load data.
+		//
+		if( $this->mCollection->count( [ '_id' => 0 ] ) )
+			$this->loadFileHeader();
+
+		//
+		// Reset members.
+		//
+		else
+		{
+			$this->headerInit();
+			$this->mapInit();
+		}
 
 	} // Constructor.
 
@@ -2192,7 +2249,7 @@ class StataFile
 		//
 		// Clear database.
 		//
-		$this->mDatabase->drop();
+		$this->mCollection->drop();
 
 		//
 		// Clear object.
@@ -2222,6 +2279,21 @@ class StataFile
 		$this->stringsRead( $file );
 		$this->enumsRead( $file );
 
+		//
+		// Write header.
+		//
+		$this->mCollection->insertOne(
+			[
+				'_id' => 0,
+				self::kTAG_PATH => $this->Path(),
+				self::kTAG_HEADER => $this->mHeader,
+				self::kTAG_MAP => $this->mMap,
+				self::kTAG_DICT => $this->mDict,
+				self::kTAG_ENUM => $this->mEnum,
+				self::kTAG_CHAR => $this->mChars
+			]
+		);
+
 		return $file;																// ==>
 
 	} // Read.
@@ -2249,7 +2321,7 @@ class StataFile
 	public function Write( string $theFile )
 	{
 		//
-		// Initialise object.
+		// Initialise map.
 		//
 		$this->mapInit();
 
@@ -2348,6 +2420,49 @@ class StataFile
 		return $file;																// ==>
 
 	} // Write.
+
+
+
+/*=======================================================================================
+ *																						*
+ *									PUBLIC UTILITIES									*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	toArray 																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Return the object properties as an array.</h4><p />
+	 *
+	 * This method can be used to convert the object properties to an array, this will
+	 * take care of converting embedded objects.
+	 *
+	 * @param mixed					$theObject			Object or array to convert.
+	 * @return array				Object and embedded properties as an array.
+	 *
+	 * @uses convertToArray()
+	 */
+	public function toArray( $theObject )
+	{
+		//
+		// Init local storage.
+		//
+		$array = [];
+		if( $theObject instanceof ArrayObject )
+			$theObject = $theObject->getArrayCopy();
+
+		//
+		// Convert to array.
+		//
+		$this->convertToArray( $theObject, $array );
+
+		return $array;        														// ==>
+
+	} // toArray.
 
 
 
@@ -2573,7 +2688,7 @@ class StataFile
 		// Write dataset label.
 		//
 		$this->writeToken( $theFile, self::kTOKEN_FILE_LABEL, FALSE );
-		$this->writeBString( $theFile, $this->DatasetLabel() );
+		$this->writeBString( $theFile, (string)$this->DatasetLabel() );
 		$this->writeToken( $theFile, self::kTOKEN_FILE_LABEL, TRUE );
 
 		//
@@ -3409,9 +3524,9 @@ class StataFile
 	protected function dataRead( SplFileObject $theFile )
 	{
 		//
-		// Init local storage.
+		// Initialise buffer.
 		//
-		$this->mData = [];
+		$this->mBuffer = [];
 
 		//
 		// Get opening token.
@@ -3527,11 +3642,15 @@ class StataFile
 			if( count( $record ) )
 			{
 				$record[ '_id' ] = $element;
-				$this->mCollection->insertOne( $record );
+				$this->insertObservation( $record );
 			}
-//				$this->mData[ $element ] = $record;
 
 		} // Scanning observations.
+
+		//
+		// Flush buffer.
+		//
+		$this->insertObservation( NULL, TRUE );
 
 		//
 		// Get closing token.
@@ -3570,9 +3689,14 @@ class StataFile
 		//
 		// Iterate observations.
 		//
-		$observation = 1;
-		foreach( $this->mData as $record )
+		$cursor = $this->mCollection->find( [ '_id' => [ '$gt' => 0 ] ] );
+		foreach( $cursor as $record )
 		{
+			//
+			// Set observation.
+			//
+			$observation = $record[ '_id' ];
+
 			//
 			// Iterate variables.
 			//
@@ -3602,7 +3726,8 @@ class StataFile
 						case self::kSTATA_TYPE_LONG_STRING:	// strL
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
 							{
-								$hash = md5( $record[ $type[ self::kOFFSET_NAME ] ] );
+								$string = $record[ $type[ self::kOFFSET_NAME ] ]->getData();
+								$hash = md5( $string );
 								if( ! array_key_exists( $hash, $strings ) )
 									$strings[ $hash ] = [
 										'v' => $variable + 1,
@@ -3706,11 +3831,6 @@ class StataFile
 	protected function stringsRead( SplFileObject $theFile )
 	{
 		//
-		// Init local storage.
-		//
-		$strings = [];
-
-		//
 		// Get opening token.
 		//
 		$this->readToken( $theFile, self::kTOKEN_FILE_LONG_STRINGS, FALSE );
@@ -3761,20 +3881,15 @@ class StataFile
 				}
 
 				//
-				// Get hash.
+				// Update observation.
 				//
-				$hash = md5( $string );
-
-				//
-				// Add string.
-				//
-				if( ! array_key_exists( $hash, $this->mStrings ) )
-					$this->mStrings[ $hash ] = $string;
-
-				//
-				// Save string reference.
-				//
-				$strings[ $v ][ $o ] = $hash;
+				$filter = [ '_id' => $o ];
+				$criteria = [
+					'$set' => [
+						$this->mDict[ $v - 1 ][ self::kOFFSET_NAME ]
+							=> new \MongoDB\BSON\Binary(
+								$string, \MongoDB\BSON\Binary::TYPE_GENERIC ) ] ];
+				$this->mCollection->updateOne( $filter, $criteria, [ 'upsert' => FALSE ] );
 
 			} // Found string block.
 
@@ -3812,22 +3927,6 @@ class StataFile
 					"Unexpected end of characteristics block [$tmp]." );		// !@! ==>
 
 		} // Iterating strings.
-
-		//
-		// Iterate long string variables.
-		//
-		foreach( $strings as $variable => $observations )
-		{
-			//
-			// Itarate long string observations.
-			//
-			foreach( $observations as $observation => $hash )
-				$this->mData
-				[ $observation ]
-				[ $this->mDict[ $variable - 1 ][ self::kOFFSET_NAME ] ]
-					= & $this->mStrings[ $hash ];
-
-		} // Iterating long string variables.
 
 	} // stringsRead.
 
@@ -3867,53 +3966,81 @@ class StataFile
 		}
 
 		//
-		// Iterate data.
+		// Handle long strings.
 		//
-		foreach( $this->mData as $observation => $record )
+		if( count( $variables ) )
 		{
 			//
-			// Iterate long strings.
+			// Build filter.
 			//
-			foreach( $variables as $variable => $name )
+			$filter = [];
+			foreach( $variables as $variable )
+				$filter[]
+					= [ $variable => [ '$exists' => TRUE ] ];
+			$filter = [
+				'_id' => [ '$gt' => 0 ],
+				'$or' => $filter
+			];
+
+			//
+			// Iterate data.
+			//
+			$cursor = $this->mCollection->find( $filter );
+			foreach( $cursor as $record )
 			{
 				//
-				// Check long string.
+				// Set observation.
 				//
-				if( array_key_exists( $name, $record ) )
+				$observation = $record[ '_id' ];
+
+				//
+				// Iterate long strings.
+				//
+				foreach( $variables as $variable => $name )
 				{
 					//
-					// Init local storage.
+					// Check long string.
 					//
-					$string = $record[ $name ];
-					$hash = md5( $string );
-
-					//
-					// Check string.
-					//
-					if( ! array_key_exists( $hash, $strings ) )
+					if( array_key_exists( $name, $record ) )
 					{
 						//
-						// Save string.
+						// Init local storage.
 						//
-						$strings[ $hash ] = [ 'v' => $variable + 1, 'o' => $observation ];
+						$string = $record[ $name ]->getData();
+						$hash = md5( $string );
 
 						//
-						// Write data.
+						// Check string.
 						//
-						$theFile->fwrite( 'GSO', 3 );
-						$this->writeUInt32( $theFile, $strings[ $hash ][ 'v' ] );
-						$this->writeUInt64( $theFile, $strings[ $hash ][ 'o' ] );
-						$theFile->fwrite( hex2bin( '81' ), 1 );
-						$this->writeUInt32( $theFile, mb_strlen( $string, '8bit' ) );
-						$theFile->fwrite( $string, mb_strlen( $string, '8bit' ) );
+						if( ! array_key_exists( $hash, $strings ) )
+						{
+							//
+							// Save string.
+							//
+							$strings[ $hash ] = [
+								'v' => $variable + 1,
+								'o' => $observation
+							];
 
-					} // New string.
+							//
+							// Write data.
+							//
+							$theFile->fwrite( 'GSO', 3 );
+							$this->writeUInt32( $theFile, $strings[ $hash ][ 'v' ] );
+							$this->writeUInt64( $theFile, $strings[ $hash ][ 'o' ] );
+							$theFile->fwrite( hex2bin( '81' ), 1 );
+							$this->writeUInt32( $theFile, mb_strlen( $string, '8bit' ) );
+							$theFile->fwrite( $string, mb_strlen( $string, '8bit' ) );
 
-				} // Has long string.
+						} // New string.
 
-			} // Iterating long string variables.
+					} // Has long string.
 
-		} // Iterate observations.
+				} // Iterating long string variables.
+
+			} // Iterate observations.
+
+		} // Has long strings.
 
 		//
 		// Write closing token.
@@ -4382,11 +4509,16 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to write.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 *
 	 * @uses ByteOrder()
 	 */
-	protected function writeUChar( SplFileObject $theFile, int $theValue )
+	protected function writeUChar( SplFileObject $theFile,
+								   int			 $theValue,
+								   bool			 $doWrite = TRUE )
 	{
 		//
 		// Pack value.
@@ -4396,10 +4528,15 @@ class StataFile
 		//
 		// write value.
 		//
-		$ok = $theFile->fwrite( $value );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write unsigned char." );								// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write unsigned char." );							// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeUChar.
 
@@ -4847,17 +4984,26 @@ class StataFile
 	protected function writeBString( SplFileObject $theFile, string $theValue )
 	{
 		//
+		// Get length.
+		//
+		$length = mb_strlen( $theValue, '8bit' );
+
+		//
 		// Get and write length.
 		//
-		$this->writeUShort( $theFile, mb_strlen( $theValue, '8bit' ) );
+		$this->writeUShort( $theFile, $length );
 
 		//
 		// Write string.
 		//
-		$ok = $theFile->fwrite( $theValue );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write string [$theValue]." );						// !@! ==>
+		if( $length )
+		{
+			$ok = $theFile->fwrite( $theValue );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write string [$theValue]." );					// !@! ==>
+
+		} // Provided string.
 
 	} // writeBString.
 
@@ -5640,6 +5786,176 @@ class StataFile
 
 /*=======================================================================================
  *																						*
+ *									DATABASE UTILITIES									*
+ *																						*
+ *======================================================================================*/
+
+
+
+	/*===================================================================================
+	 *	insertFileHeader																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Insert file header.</h4>
+	 *
+	 * This method can be used to insert the file header into the database, the method will
+	 * use the current object's file header data members and the current collection.
+	 */
+	protected function insertFileHeader()
+	{
+		$this->mCollection->insertOne(
+			[
+				'_id' => 0,
+				self::kTAG_PATH => $this->Path(),
+				self::kTAG_HEADER => $this->mHeader,
+				self::kTAG_MAP => $this->mMap,
+				self::kTAG_DICT => $this->mDict,
+				self::kTAG_ENUM => $this->mEnum,
+				self::kTAG_CHAR => $this->mChars
+			]
+		);
+
+	} // insertFileHeader.
+
+
+	/*===================================================================================
+	 *	replaceFileHeader																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Replace file header.</h4>
+	 *
+	 * This method can be used to replace the current file header with the current object's
+	 * contents, the method will use the current collection.
+	 */
+	protected function replaceFileHeader()
+	{
+		$this->mCollection->replaceOne(
+			[ '_id' => 0 ],
+			[
+				'_id' => 0,
+				self::kTAG_PATH => $this->Path(),
+				self::kTAG_HEADER => $this->mHeader,
+				self::kTAG_MAP => $this->mMap,
+				self::kTAG_DICT => $this->mDict,
+				self::kTAG_ENUM => $this->mEnum,
+				self::kTAG_CHAR => $this->mChars
+			]
+		);
+
+	} // replaceFileHeader.
+
+
+	/*===================================================================================
+	 *	loadFileHeader																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Load file header.</h4>
+	 *
+	 * This method can be used to load file header from the current collection into the
+	 * object's data members. If the header is missing, the method will raise an exception.
+	 *
+	 * @throws RuntimeException
+	 */
+	protected function loadFileHeader()
+	{
+		//
+		// Get header.
+		//
+		$header = $this->mCollection->findOne( [ '_id' => 0 ] );
+		if( $header !== NULL )
+		{
+			//
+			// Load header.
+			//
+			$this->Path( $header[ self::kTAG_PATH ] );
+			$this->mHeader = $this->toArray( $header[ self::kTAG_HEADER ] );
+			$this->mMap = $this->toArray( $header[ self::kTAG_MAP ] );
+			$this->mDict = $this->toArray( $header[ self::kTAG_DICT ] );
+			$this->mEnum = $this->toArray( $header[ self::kTAG_ENUM ] );
+			$this->mChars = $this->toArray( $header[ self::kTAG_CHAR ] );
+
+			//
+			// Adjust time stamp.
+			//
+			$this->mHeader[ self::kTOKEN_FILE_TIMESTAMP ]
+				= new DateTime(
+					$this->mHeader
+						[ self::kTOKEN_FILE_TIMESTAMP ]
+						[ 'date' ],
+					new DateTimeZone( $this->mHeader
+						[ self::kTOKEN_FILE_TIMESTAMP ]
+						[ 'timezone' ] ) );
+
+		} // Found header.
+
+		//
+		// No file header.
+		//
+		else
+			throw new RuntimeException(
+				"File header not found." );										// !@! ==>
+
+	} // loadFileHeader.
+
+
+	/*===================================================================================
+	 *	insertObservation																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Insert observation.</h4>
+	 *
+	 * This method can be used to insert an observation, the data will be added to the
+	 * buffer and when its count exceeds {@link kBUFFER_SIZE} the buffer will be flushed
+	 * to the current collection.
+	 *
+	 * The method expects two parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theData</b>: The observation data.
+	 * 	<li><b>$doFlush</b>: If <tt>TRUE</tt>, the buffer will be flushed.
+	 * </ul>
+	 *
+	 * @param array					$theData			Observation data.
+	 * @param bool					$doFlush			<tt>TRUE</tt> flush buffer.
+	 */
+	protected function insertObservation( array $theData = NULL, bool $doFlush = FALSE )
+	{
+		//
+		// Add observation.
+		//
+		if( is_array( $theData )
+		 && count( $theData ) )
+			$this->mBuffer[] = $theData;
+
+		//
+		// Flush buffer.
+		//
+		if( count( $this->mBuffer )
+		 && ( $doFlush
+		   || (count( $this->mBuffer ) > self::kBUFFER_SIZE) ) )
+		{
+			//
+			// Flush.
+			//
+			$this->mCollection->insertMany( $this->mBuffer );
+
+			//
+			// Reset buffer.
+			//
+			$this->mBuffer = [];
+
+		} // Flush.
+
+	} // insertObservation.
+
+
+
+/*=======================================================================================
+ *																						*
  *									PROTECTED UTILITIES									*
  *																						*
  *======================================================================================*/
@@ -5982,6 +6298,70 @@ class StataFile
 		return $theString;															// ==>
 
 	} // truncateString.
+
+
+	/*===================================================================================
+	 *	convertToArray																	*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Convert embedded objects to array.</h4><p />
+	 *
+	 * This method is used by the {@link toArray()} method to convert embedded properties
+	 * derived from this class, it willtraverse the object's properties structured
+	 * converting any encountered objects to arrays.
+	 *
+	 * There is no error checking on parameters, it is the caller's responsibility.
+	 *
+	 * @param array					$theSource			Source structure.
+	 * @param array				   &$theDestination		Reference to the destination array.
+	 * @return void
+	 */
+	protected function convertToArray( $theSource, &$theDestination )
+	{
+		//
+		// Traverse source.
+		//
+		$keys = array_keys( $theSource );
+		foreach( $keys as $key )
+		{
+			//
+			// Init local storage.
+			//
+			$value = & $theSource[ $key ];
+
+			//
+			// Handle collections.
+			//
+			if( is_array( $value )
+			 || ($value instanceof ArrayObject) )
+			{
+				//
+				// Initialise destination element.
+				//
+				$theDestination[ $key ] = NULL;
+
+				//
+				// Convert.
+				//
+				if( $value instanceof ArrayObject )
+					$this->convertToArray( $value->getArrayCopy(),
+						$theDestination[ $key ] );
+				else
+					$this->convertToArray( $value,
+						$theDestination[ $key ] );
+
+			} // Is collection.
+
+			//
+			// Handle scalars.
+			//
+			else
+				$theDestination[ $key ] = $value;
+
+		} // Traversing source.
+
+	} // convertToArray.
 
 
 	/*===================================================================================
