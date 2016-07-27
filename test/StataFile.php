@@ -19,6 +19,11 @@ require_once(dirname(__DIR__) . "/includes.local.php");
 require_once( kPATH_LIBRARY_ROOT . "src/StataFile.php" );
 
 //
+// Init benchmark.
+//
+$bench = new Ubench();
+
+//
 // Instantiate object.
 //
 echo( '$test = new StataFile();' . "\n" );
@@ -31,9 +36,13 @@ echo( "\n=======================================================================
 // Read file.
 //
 echo( '$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );' . "\n" );
-$result = $test->Read( kPATH_LIBRARY_ROOT . "test/LARGE.dta" );
+$bench->start();
+$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );
+$bench->end();
 var_dump( $result->getRealPath() );
 print_r( $test );
+echo( "\nTime: " . $bench->getTime() . "\n" );
+echo( "Memory: " . $bench->getMemoryPeak() . "\n" );
 
 echo( "\n" );
 
@@ -41,9 +50,13 @@ echo( "\n" );
 // Write file.
 //
 echo( '$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );' . "\n" );
+$bench->start();
 $result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );
+$bench->end();
 var_dump( $result->getRealPath() );
 print_r( $test );
+echo( "\nTime: " . $bench->getTime() . "\n" );
+echo( "Memory: " . $bench->getMemoryPeak() . "\n\n" );
 exit;
 
 echo( "\n====================================================================================\n\n" );

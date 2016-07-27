@@ -614,13 +614,22 @@ class StataFile
 	const kTAG_CHAR = 'char';
 
 	/**
-	 * <h4>Buffer size.</h4>
+	 * <h4>Database buffer size.</h4>
 	 *
-	 * This constant holds the <em>data buffer size</em>.
+	 * This constant holds the <em>database buffer size</em>.
 	 *
 	 * @var int
 	 */
 	const kBUFFER_SIZE = 256;
+
+	/**
+	 * <h4>File buffer size.</h4>
+	 *
+	 * This constant holds the <em>file buffer size</em>.
+	 *
+	 * @var int
+	 */
+	const kBUFFER_FILE_SIZE = 4096;
 
 	/**
 	 * <h4>Dataset header.</h4>
@@ -742,7 +751,7 @@ class StataFile
 	protected $mChars = [];
 
 	/**
-	 * <h4>Buffer.</h4>
+	 * <h4>Database buffer.</h4>
 	 *
 	 * This data member holds the data buffer, it will be flushed when the number of entries
 	 * exceeds {@link kBUFFER_SIZE}.
@@ -750,6 +759,16 @@ class StataFile
 	 * @var array
 	 */
 	protected $mBuffer = [];
+
+	/**
+	 * <h4>File buffer.</h4>
+	 *
+	 * This data member holds the file buffer, it will be flushed when the size exceeds
+	 * {@link kBUFFER_FILE_SIZE}.
+	 *
+	 * @var string
+	 */
+	protected $mFileBuffer = '';
 
 	/**
 	 * <h4>Client connection.</h4>
@@ -2326,6 +2345,11 @@ class StataFile
 		$this->mapInit();
 
 		//
+		// Reset file buffer.
+		//
+		$this->mFileBuffer = '';
+
+		//
 		// Set file.
 		//
 		$file = new SplFileObject( $this->Path( $theFile, TRUE ), "w+" );
@@ -2898,11 +2922,13 @@ class StataFile
 		$this->writeToken( $theFile, self::kTOKEN_FILE_VARIABLE_TYPES, FALSE );
 
 		//
-		// Write types.
+		// Collect types.
 		//
 		$list = $this->VariableType();
 		foreach( $list as $element )
-			$this->writeUShort( $theFile, $element );
+			$this->writeBuffer(
+				$theFile, $this->writeUShort( $theFile, $element, FALSE ) );
+		$this->writeBuffer( $theFile, NULL, TRUE );
 
 		//
 		// Write closing token.
@@ -2976,7 +3002,9 @@ class StataFile
 		//
 		$list = $this->VariableName();
 		foreach( $list as $element )
-			$this->writeCString( $theFile, 129, $element );
+			$this->writeBuffer(
+				$theFile, $this->writeCString( $theFile, 129, $element, FALSE ) );
+		$this->writeBuffer( $theFile, NULL, TRUE );
 
 		//
 		// Write closing token.
@@ -3079,19 +3107,20 @@ class StataFile
 		// Write order.
 		//
 		foreach( $list as $variable => $order )
-			$this->writeUShort( $theFile, $variable + 1 );
+			$this->writeBuffer(
+				$theFile, $this->writeUShort( $theFile, $variable + 1, FALSE ) );
 
 		//
 		// Write remaining and closing elements.
 		//
 		$count = count( $this->mDict ) - count( $list );
 		while( $count-- )
-			$this->writeUShort( $theFile, 0 );
+			$this->writeBuffer( $theFile, $this->writeUShort( $theFile, 0, FALSE ) );
 
 		//
 		// Close list.
 		//
-		$this->writeUShort( $theFile, 0 );
+		$this->writeBuffer( $theFile, $this->writeUShort( $theFile, 0, FALSE ), TRUE );
 
 		//
 		// Write closing token.
@@ -3157,9 +3186,12 @@ class StataFile
 		// Iterate formats.
 		//
 		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
-			$this->writeCString(
-				$theFile, 57, $this->mDict[ $variable ][ self::kOFFSET_FORMAT ]
+			$this->writeBuffer(
+				$theFile,
+				$this->writeCString(
+					$theFile, 57, $this->mDict[ $variable ][ self::kOFFSET_FORMAT ], FALSE )
 			);
+		$this->writeBuffer( $theFile, NULL, TRUE );
 
 		//
 		// Write closing token.
@@ -3244,9 +3276,12 @@ class StataFile
 		// Iterate labels.
 		//
 		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
-			$this->writeCString(
-				$theFile, 129, (string)$this->VariableEnumeration( $variable )
+			$this->writeBuffer(
+				$theFile,
+				$this->writeCString(
+					$theFile, 129, (string)$this->VariableEnumeration( $variable ), FALSE )
 			);
+		$this->writeBuffer( $theFile, NULL, TRUE );
 
 		//
 		// Write closing token.
@@ -3312,7 +3347,12 @@ class StataFile
 		// Iterate labels.
 		//
 		for( $variable = 0; $variable < $this->VariablesCount(); $variable++ )
-			$this->writeCString( $theFile, 321, $this->VariableLabel( $variable ) );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeCString(
+					$theFile, 321, $this->VariableLabel( $variable ), FALSE )
+			);
+		$this->writeBuffer( $theFile, NULL, TRUE );
 
 		//
 		// Write closing token.
@@ -3474,25 +3514,41 @@ class StataFile
 			//
 			// Write element size.
 			//
-			$this->writeUInt32( $theFile, $char[ self::kOFFSET_CHARS_SIZE ] );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeUInt32( $theFile, $char[ self::kOFFSET_CHARS_SIZE ], FALSE )
+			);
 
 			//
 			// Write variable name.
 			//
-			$this->writeCString( $theFile, 129, $char[ self::kOFFSET_CHARS_VARNAME ] );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeCString(
+					$theFile, 129, $char[ self::kOFFSET_CHARS_VARNAME ], FALSE )
+			);
 
 			//
 			// Write characteristic name.
 			//
-			$this->writeCString( $theFile, 129, $char[ self::kOFFSET_CHARS_NAME ] );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeCString(
+					$theFile, 129, $char[ self::kOFFSET_CHARS_NAME ], FALSE )
+			);
 
 			//
 			// Write characteristic data.
 			//
-			$this->writeCString(
+			$this->writeBuffer(
 				$theFile,
-				mb_strlen( $char[ self::kOFFSET_CHARS_DATA ] ) + 1,
-				$char[ self::kOFFSET_CHARS_DATA ] );
+				$this->writeCString(
+					$theFile,
+					mb_strlen( $char[ self::kOFFSET_CHARS_DATA ] ) + 1,
+					$char[ self::kOFFSET_CHARS_DATA ],
+					FALSE ),
+				TRUE
+			);
 
 			//
 			// Close element.
@@ -3706,12 +3762,17 @@ class StataFile
 				// Handle fixed string.
 				//
 				if( $type[ 'type' ] <= self::kSTATA_TYPE_FIXED_STRING )
-					$this->writeCString(
+					$this->writeBuffer(
 						$theFile,
-						$type[ 'type' ],
-						( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-							? $record[ $type[ self::kOFFSET_NAME ] ]
-							: "\0" );
+						$this->writeCString(
+							$theFile,
+							$type[ 'type' ],
+							(( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
+								? $record[ $type[ self::kOFFSET_NAME ] ]
+								: "\0"),
+							FALSE
+						)
+					);
 
 				//
 				// Handle other types.
@@ -3733,36 +3794,78 @@ class StataFile
 										'v' => $variable + 1,
 										'o' => $observation
 									];
-								$this->writeUShort( $theFile, $strings[ $hash ][ 'v' ] );
-								$this->writeUInt48( $theFile, $strings[ $hash ][ 'o' ] );
+								$this->writeBuffer(
+									$theFile,
+									$this->writeUShort(
+										$theFile,
+										$strings[ $hash ][ 'v' ],
+										FALSE
+									)
+								);
+								$this->writeBuffer(
+									$theFile,
+									$this->writeUInt48(
+										$theFile,
+										$strings[ $hash ][ 'o' ],
+										FALSE
+									)
+								);
 							}
 							else
 							{
-								$this->writeUShort( $theFile, 0 );
-								$this->writeUInt48( $theFile, 0 );
+								$this->writeBuffer(
+									$theFile,
+									$this->writeUShort( $theFile, 0, FALSE )
+								);
+								$this->writeBuffer(
+									$theFile,
+									$this->writeUInt48( $theFile, 0, FALSE )
+								);
 							}
 							break;
 
 						case self::kSTATA_TYPE_DOUBLE: // double
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$this->writeDouble(
+								$this->writeBuffer(
 									$theFile,
-									(double)$record[ $type[ self::kOFFSET_NAME ] ] );
+									$this->writeDouble(
+										$theFile,
+										(double)$record[ $type[ self::kOFFSET_NAME ] ],
+										FALSE
+									)
+								);
 							elseif( $this->ByteOrder() == 'MSF' )
-								$theFile->fwrite( hex2bin( '7fe0000000000000' ) );
+								$this->writeBuffer(
+									$theFile,
+									hex2bin( '7fe0000000000000' )
+								);
 							else
-								$theFile->fwrite( hex2bin( '000000000000e07f' ) );
+								$this->writeBuffer(
+									$theFile,
+									hex2bin( '000000000000e07f' )
+								);
 							break;
 
 						case self::kSTATA_TYPE_FLOAT: // float
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$this->writeFloat(
+								$this->writeBuffer(
 									$theFile,
-									(float)$record[ $type[ self::kOFFSET_NAME ] ] );
+									$this->writeFloat(
+										$theFile,
+										(float)$record[ $type[ self::kOFFSET_NAME ] ],
+										FALSE
+									)
+								);
 							elseif( $this->ByteOrder() == 'MSF' )
-								$theFile->fwrite( hex2bin( '7f000000' ) );
+								$this->writeBuffer(
+									$theFile,
+									hex2bin( '7f000000' )
+								);
 							else
-								$theFile->fwrite( hex2bin( '0000007f' ) );
+								$this->writeBuffer(
+									$theFile,
+									hex2bin( '0000007f' )
+								);
 							break;
 
 						case self::kSTATA_TYPE_LONG: // long
@@ -3770,7 +3873,10 @@ class StataFile
 								$value = $record[ $type[ self::kOFFSET_NAME ] ];
 							else
 								$value = 2147483621;
-							$this->writeLong( $theFile, $value );
+							$this->writeBuffer(
+								$theFile,
+								$this->writeLong( $theFile, $value, FALSE )
+							);
 							break;
 
 						case self::kSTATA_TYPE_SHORT: // int
@@ -3778,15 +3884,27 @@ class StataFile
 								$value = $record[ $type[ self::kOFFSET_NAME ] ];
 							else
 								$value = 32741;
-							$this->writeInt( $theFile, $value );
+							$this->writeBuffer(
+								$theFile,
+								$this->writeInt( $theFile, $value, FALSE )
+							);
 							break;
 
 						case self::kSTATA_TYPE_BYTE: // byte
 							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$this->writeByte(
-									$theFile, $record[ $type[ self::kOFFSET_NAME ] ] );
+								$this->writeBuffer(
+									$theFile,
+									$this->writeByte(
+										$theFile,
+										$record[ $type[ self::kOFFSET_NAME ] ],
+										FALSE
+									)
+								);
 							else
-								$theFile->fwrite( hex2bin( '65' ), 1 );
+								$this->writeBuffer(
+									$theFile,
+									hex2bin( '65' )
+								);
 							break;
 
 						default:
@@ -3807,6 +3925,11 @@ class StataFile
 			$observation++;
 
 		} // Iterating data.
+
+		//
+		// Flush buffer.
+		//
+		$this->writeBuffer( $theFile, NULL, TRUE );
 
 		//
 		// Write closing token.
@@ -4025,12 +4148,31 @@ class StataFile
 							//
 							// Write data.
 							//
-							$theFile->fwrite( 'GSO', 3 );
-							$this->writeUInt32( $theFile, $strings[ $hash ][ 'v' ] );
-							$this->writeUInt64( $theFile, $strings[ $hash ][ 'o' ] );
-							$theFile->fwrite( hex2bin( '81' ), 1 );
-							$this->writeUInt32( $theFile, mb_strlen( $string, '8bit' ) );
-							$theFile->fwrite( $string, mb_strlen( $string, '8bit' ) );
+							$this->writeBuffer( $theFile, 'GSO' );
+							$this->writeBuffer(
+								$theFile,
+								$this->writeUInt32(
+									$theFile,
+									$strings[ $hash ][ 'v' ],
+									FALSE )
+							);
+							$this->writeBuffer(
+								$theFile,
+								$this->writeUInt64(
+									$theFile,
+									$strings[ $hash ][ 'o' ],
+									FALSE )
+							);
+							$this->writeBuffer( $theFile, hex2bin( '81' ) );
+							$this->writeBuffer(
+								$theFile,
+								$this->writeUInt32(
+									$theFile,
+									mb_strlen( $string, '8bit' ),
+									FALSE
+								)
+							);
+							$this->writeBuffer( $theFile, $string );
 
 						} // New string.
 
@@ -4039,6 +4181,11 @@ class StataFile
 				} // Iterating long string variables.
 
 			} // Iterate observations.
+
+			//
+			// Flush buffer.
+			//
+			$this->writeBuffer( $theFile, NULL, TRUE );
 
 		} // Has long strings.
 
@@ -4306,44 +4453,62 @@ class StataFile
 			//
 			// Write table length.
 			//
-			$this->writeUInt32( $theFile, $table[ 'len' ] );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeUInt32( $theFile, $table[ 'len' ], FALSE )
+			);
 
 			//
 			// Write enumeration name.
 			//
-			$this->writeCString( $theFile, 129, $table[ 'enum' ] );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeCString( $theFile, 129, $table[ 'enum' ], FALSE )
+			);
 
 			//
 			// Write padding.
 			//
-			$theFile->fwrite( "\0\0\0", 3 );
+			$this->writeBuffer( $theFile, "\0\0\0" );
 
 			//
 			// Write entries.
 			//
-			$this->writeUInt32( $theFile, $table[ 'entries' ] );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeUInt32( $theFile, $table[ 'entries' ], FALSE )
+			);
 
 			//
 			// Write text length.
 			//
-			$this->writeUInt32( $theFile, $table[ 'txtlen' ] );
+			$this->writeBuffer(
+				$theFile,
+				$this->writeUInt32( $theFile, $table[ 'txtlen' ], FALSE )
+			);
 
 			//
 			// Write offsets.
 			//
 			foreach( $table[ 'off' ] as $value )
-				$this->writeUInt32( $theFile, $value );
+				$this->writeBuffer(
+					$theFile,
+					$this->writeUInt32( $theFile, $value, FALSE )
+				);
 
 			//
 			// Write keys.
 			//
 			foreach( $table[ 'key' ] as $value )
-				$this->writeUInt32( $theFile, $value );
+				$this->writeBuffer(
+					$theFile,
+					$this->writeUInt32( $theFile, $value, FALSE )
+				);
 
 			//
 			// Write text.
 			//
-			$theFile->fwrite( $table[ 'txt' ] );
+			$this->writeBuffer( $theFile, $table[ 'txt' ], TRUE );
 
 			//
 			// Close element.
@@ -4595,11 +4760,16 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to write.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 *
 	 * @uses ByteOrder()
 	 */
-	protected function writeUShort( SplFileObject $theFile, int $theValue )
+	protected function writeUShort( SplFileObject $theFile,
+									int			  $theValue,
+									bool		  $doWrite = TRUE )
 	{
 		//
 		// Pack value.
@@ -4622,10 +4792,15 @@ class StataFile
 		//
 		// write value.
 		//
-		$ok = $theFile->fwrite( $value );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write unsigned short." );							// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write unsigned short." );						// !@! ==>
+		}
+		
+		return $value;																// ==>
 
 	} // writeUShort.
 
@@ -4690,11 +4865,16 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 *
 	 * @uses ByteOrder()
 	 */
-	protected function writeUInt32( SplFileObject $theFile, int $theValue )
+	protected function writeUInt32( SplFileObject $theFile,
+									int			  $theValue,
+									bool		  $doWrite = TRUE )
 	{
 		//
 		// Pack value.
@@ -4717,10 +4897,15 @@ class StataFile
 		//
 		// write value.
 		//
-		$ok = $theFile->fwrite( $value );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write unsigned long." );								// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write unsigned long." );							// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeUInt32.
 
@@ -4785,11 +4970,16 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 *
 	 * @uses ByteOrder()
 	 */
-	protected function writeUInt64( SplFileObject $theFile, int $theValue )
+	protected function writeUInt64( SplFileObject $theFile,
+									int			  $theValue,
+									bool		  $doWrite = TRUE )
 	{
 		//
 		// Pack value.
@@ -4812,10 +5002,15 @@ class StataFile
 		//
 		// write value.
 		//
-		$ok = $theFile->fwrite( $value );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write unsigned long." );								// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write unsigned long." );							// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeUInt64.
 
@@ -4882,11 +5077,16 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 *
 	 * @uses ByteOrder()
 	 */
-	protected function writeUInt48( SplFileObject $theFile, int $theValue )
+	protected function writeUInt48( SplFileObject $theFile,
+									int			  $theValue,
+									bool		  $doWrite = TRUE )
 	{
 		//
 		// Pack value.
@@ -4909,10 +5109,15 @@ class StataFile
 		//
 		// write value.
 		//
-		$ok = $theFile->fwrite( $value );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write 48 bit integer." );							// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write 48 bit integer." );						// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeUInt48.
 
@@ -4976,12 +5181,16 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param string				$theValue			Value to write.
-	 * @return mixed				The string or <tt>FALSE</tt>.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 *
 	 * @uses readUShort()
 	 */
-	protected function writeBString( SplFileObject $theFile, string $theValue )
+	protected function writeBString( SplFileObject $theFile,
+									 string		   $theValue,
+									 bool		   $doWrite = TRUE )
 	{
 		//
 		// Get length.
@@ -4991,19 +5200,25 @@ class StataFile
 		//
 		// Get and write length.
 		//
-		$this->writeUShort( $theFile, $length );
+		$data = $this->writeUShort( $theFile, $length, $doWrite );
 
 		//
 		// Write string.
 		//
 		if( $length )
 		{
-			$ok = $theFile->fwrite( $theValue );
-			if( $ok === NULL )
-				throw new RuntimeException(
-					"Unable to write string [$theValue]." );					// !@! ==>
+			$data .= $theValue;
+			if( $doWrite )
+			{
+				$ok = $theFile->fwrite( $theValue );
+				if( $ok === NULL )
+					throw new RuntimeException(
+						"Unable to write string [$theValue]." );				// !@! ==>
+			}
 
 		} // Provided string.
+
+		return $data;																// ==>
 
 	} // writeBString.
 
@@ -5081,14 +5296,17 @@ class StataFile
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param int					$theLength			Field size in bytes.
 	 * @param string				$theValue			Value to write.
-	 * @return mixed				The string or <tt>FALSE</tt>.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 *
 	 * @uses readUShort()
 	 */
 	protected function writeCString( SplFileObject $theFile,
 									 int		   $theLength,
-									 string		   $theValue )
+									 string		   $theValue,
+									 bool		   $doWrite = TRUE )
 	{
 		//
 		// Truncate string.
@@ -5103,10 +5321,15 @@ class StataFile
 		//
 		// Write string.
 		//
-		$ok = $theFile->fwrite( $theValue );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write string [$theValue]." );						// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $theValue );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write string [$theValue]." );					// !@! ==>
+		}
+
+		return $theValue;															// ==>
 
 	} // writeCString.
 
@@ -5171,9 +5394,12 @@ class StataFile
 	 * This method can be used to write the dataset time stamp.
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 */
-	protected function writeTimeStamp( SplFileObject $theFile )
+	protected function writeTimeStamp( SplFileObject $theFile, bool $doWrite = TRUE )
 	{
 		//
 		// Get time stamp.
@@ -5182,20 +5408,14 @@ class StataFile
 		if( $stamp instanceof DateTime )
 		{
 			//
-			// Write type.
+			// Set type.
 			//
-			$ok = $theFile->fwrite( pack( 'C', 17 ) );
-			if( $ok === NULL )
-				throw new RuntimeException(
-					"Unable to write time stamp type." );						// !@! ==>
+			$data = pack( 'C', 17 );
 
 			//
-			// Write time stamp.
+			// Set time stamp.
 			//
-			$ok = $theFile->fwrite( $stamp->format( 'd M Y H:i' ) );
-			if( $ok === NULL )
-				throw new RuntimeException(
-					"Unable to write time stamp." );							// !@! ==>
+			$data .= $stamp->format( 'd M Y H:i' );
 
 		} // Has time stamp.
 
@@ -5203,13 +5423,20 @@ class StataFile
 		// No time stamp.
 		//
 		else
+			$data = "\0";
+
+		//
+		// Write time stamp.
+		//
+		if( $doWrite )
 		{
-			$ok = $theFile->fwrite( 0x00 );
+			$ok = $theFile->fwrite( $data );
 			if( $ok === NULL )
 				throw new RuntimeException(
-					"Unable to write empty time stamp." );						// !@! ==>
+					"Unable to write time stamp." );							// !@! ==>
+		}
 
-		} // No time stamp.
+		return $data;																// ==>
 
 	} // writeTimeStamp.
 
@@ -5276,9 +5503,14 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 */
-	protected function writeByte( SplFileObject $theFile, int $theValue )
+	protected function writeByte( SplFileObject $theFile,
+								  int			$theValue,
+								  bool			$doWrite = TRUE )
 	{
 		//
 		// Pack value.
@@ -5290,10 +5522,15 @@ class StataFile
 		//
 		// Write value.
 		//
-		$ok = $theFile->fwrite( $value, 1 );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write byte." );										// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write byte." );									// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeByte.
 
@@ -5370,9 +5607,14 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 */
-	protected function writeInt( SplFileObject $theFile, int $theValue )
+	protected function writeInt( SplFileObject $theFile,
+								 int		   $theValue,
+								 bool		   $doWrite = TRUE )
 	{
 		//
 		// Handle missing value.
@@ -5402,10 +5644,15 @@ class StataFile
 		//
 		// Write value.
 		//
-		$ok = $theFile->fwrite( $value, 2 );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write short." );										// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write short." );									// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeInt.
 
@@ -5476,9 +5723,14 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param int					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 */
-	protected function writeLong( SplFileObject $theFile, int $theValue )
+	protected function writeLong( SplFileObject $theFile,
+								  int			$theValue,
+								  bool			$doWrite = TRUE )
 	{
 		//
 		// Handle missing value.
@@ -5508,10 +5760,15 @@ class StataFile
 		//
 		// Write value.
 		//
-		$ok = $theFile->fwrite( $value, 4 );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write long." );										// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write long." );									// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeLong.
 
@@ -5583,9 +5840,14 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param float					$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 */
-	protected function writeFloat( SplFileObject $theFile, float $theValue )
+	protected function writeFloat( SplFileObject $theFile,
+								   float		 $theValue,
+								   bool			 $doWrite = TRUE )
 	{
 		//
 		// Handle missing value.
@@ -5639,10 +5901,15 @@ class StataFile
 		//
 		// Write value.
 		//
-		$ok = $theFile->fwrite( $value, 4 );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write float." );										// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write float." );									// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeFloat.
 
@@ -5714,9 +5981,14 @@ class StataFile
 	 *
 	 * @param SplFileObject			$theFile			File to parse.
 	 * @param double				$theValue			Value to write.
+	 * @param bool					$doWrite			<tt>TRUE</tt> write, <tt>FALSE</tt>
+	 * 													return binary string.
+	 * @return string				The binary string.
 	 * @throws RuntimeException
 	 */
-	protected function writeDouble( SplFileObject $theFile, $theValue )
+	protected function writeDouble( SplFileObject $theFile,
+												  $theValue,
+									bool		  $doWrite = TRUE )
 	{
 		//
 		// Cast to double.
@@ -5775,12 +6047,76 @@ class StataFile
 		//
 		// Write value.
 		//
-		$ok = $theFile->fwrite( $value, 8 );
-		if( $ok === NULL )
-			throw new RuntimeException(
-				"Unable to write double." );									// !@! ==>
+		if( $doWrite )
+		{
+			$ok = $theFile->fwrite( $value );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write double." );								// !@! ==>
+		}
+
+		return $value;																// ==>
 
 	} // writeDouble.
+
+
+	/*===================================================================================
+	 *	writeBuffer																		*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write file buffer.</h4>
+	 *
+	 * This method can be used to buffer file writes, the buffer will be flushed when its
+	 * size exceeds {@link kBUFFER_FILE_SIZE}.
+	 *
+	 * The method expects two parameters:
+	 *
+	 * <ul>
+	 * 	<li><b>$theData</b>: The file data.
+	 * 	<li><b>$doFlush</b>: If <tt>TRUE</tt>, the buffer will be flushed.
+	 * </ul>
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 * @param string				$theData			File data.
+	 * @param bool					$doFlush			<tt>TRUE</tt> flush buffer.
+	 * @throws RuntimeException
+	 */
+	protected function writeBuffer( SplFileObject $theFile,
+									string		  $theData = NULL,
+									bool		  $doFlush = FALSE )
+	{
+		//
+		// Add observation.
+		//
+		if( ($theData !== NULL)
+		 && mb_strlen( (string)$theData, '8bit' ) )
+			$this->mFileBuffer .= $theData;
+
+		//
+		// Flush buffer.
+		//
+		$size = mb_strlen( $this->mFileBuffer, '8bit' );
+		if( $size
+		 && ( $doFlush
+		   || ($size > self::kBUFFER_FILE_SIZE) ) )
+		{
+			//
+			// Flush.
+			//
+			$ok = $theFile->fwrite( $this->mFileBuffer );
+			if( $ok === NULL )
+				throw new RuntimeException(
+					"Unable to write file buffer." );							// !@! ==>
+
+			//
+			// Reset buffer.
+			//
+			$this->mFileBuffer = '';
+
+		} // Flush.
+
+	} // writeBuffer.
 
 
 
