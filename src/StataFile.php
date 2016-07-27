@@ -3863,11 +3863,8 @@ class StataFile
 			//
 			// Add observation.
 			//
-			if( count( $record ) )
-			{
-				$record[ '_id' ] = $element;
-				$this->insertObservation( $record );
-			}
+			$record[ '_id' ] = $element;
+			$this->insertObservation( $record );
 
 		} // Scanning observations.
 
@@ -3903,6 +3900,7 @@ class StataFile
 		//
 		// Init local storage.
 		//
+		$index = 1;
 		$strings = [];
 
 		//
@@ -3916,185 +3914,16 @@ class StataFile
 		//
 		// Get data.
 		//
-		$cursor = $this->mCollection->find( [ '_id' => [ '$gt' => 0 ] ] );
+		$cursor = $this->mCollection->find(
+			[ '_id' => [ '$gt' => 0 ] ],
+			[ 'sort' => [ '_id' => 1 ] ]
+		);
 
 		//
 		// Iterate observations.
 		//
 		foreach( $cursor as $record )
-		{
-			//
-			// Normalise record.
-			//
-			$observation = $record[ '_id' ];
-
-			//
-			// Iterate variables.
-			//
-			foreach( $this->mDict as $variable => $type )
-			{
-				//
-				// Handle fixed string.
-				//
-				if( $type[ 'type' ] <= self::kSTATA_TYPE_FIXED_STRING )
-					$this->writeBuffer(
-						$theFile,
-						$this->writeCString(
-							$theFile,
-							$type[ 'type' ],
-							(( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								? $record[ $type[ self::kOFFSET_NAME ] ]
-								: "\0"),
-							FALSE
-						)
-					);
-
-				//
-				// Handle other types.
-				//
-				else
-				{
-					//
-					// Parse type.
-					//
-					switch( $type[ 'type' ] )
-					{
-						case self::kSTATA_TYPE_LONG_STRING:	// strL
-							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-							{
-								$string = $record[ $type[ self::kOFFSET_NAME ] ]->getData();
-								$hash = md5( $string );
-								if( ! array_key_exists( $hash, $strings ) )
-									$strings[ $hash ] = [
-										'v' => $variable + 1,
-										'o' => $observation
-									];
-								$this->writeBuffer(
-									$theFile,
-									$this->writeUShort(
-										$theFile,
-										$strings[ $hash ][ 'v' ],
-										FALSE
-									)
-								);
-								$this->writeBuffer(
-									$theFile,
-									$this->writeUInt48(
-										$theFile,
-										$strings[ $hash ][ 'o' ],
-										FALSE
-									)
-								);
-							}
-							else
-							{
-								$this->writeBuffer(
-									$theFile,
-									$this->writeUShort( $theFile, 0, FALSE )
-								);
-								$this->writeBuffer(
-									$theFile,
-									$this->writeUInt48( $theFile, 0, FALSE )
-								);
-							}
-							break;
-
-						case self::kSTATA_TYPE_DOUBLE: // double
-							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$this->writeBuffer(
-									$theFile,
-									$this->writeDouble(
-										$theFile,
-										(double)$record[ $type[ self::kOFFSET_NAME ] ],
-										FALSE
-									)
-								);
-							elseif( $this->ByteOrder() == 'MSF' )
-								$this->writeBuffer(
-									$theFile,
-									hex2bin( '7fe0000000000000' )
-								);
-							else
-								$this->writeBuffer(
-									$theFile,
-									hex2bin( '000000000000e07f' )
-								);
-							break;
-
-						case self::kSTATA_TYPE_FLOAT: // float
-							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$this->writeBuffer(
-									$theFile,
-									$this->writeFloat(
-										$theFile,
-										(float)$record[ $type[ self::kOFFSET_NAME ] ],
-										FALSE
-									)
-								);
-							elseif( $this->ByteOrder() == 'MSF' )
-								$this->writeBuffer(
-									$theFile,
-									hex2bin( '7f000000' )
-								);
-							else
-								$this->writeBuffer(
-									$theFile,
-									hex2bin( '0000007f' )
-								);
-							break;
-
-						case self::kSTATA_TYPE_LONG: // long
-							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$value = $record[ $type[ self::kOFFSET_NAME ] ];
-							else
-								$value = 2147483621;
-							$this->writeBuffer(
-								$theFile,
-								$this->writeLong( $theFile, $value, FALSE )
-							);
-							break;
-
-						case self::kSTATA_TYPE_SHORT: // int
-							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$value = $record[ $type[ self::kOFFSET_NAME ] ];
-							else
-								$value = 32741;
-							$this->writeBuffer(
-								$theFile,
-								$this->writeInt( $theFile, $value, FALSE )
-							);
-							break;
-
-						case self::kSTATA_TYPE_BYTE: // byte
-							if( array_key_exists( $type[ self::kOFFSET_NAME ], $record ) )
-								$this->writeBuffer(
-									$theFile,
-									$this->writeByte(
-										$theFile,
-										$record[ $type[ self::kOFFSET_NAME ] ],
-										FALSE
-									)
-								);
-							else
-								$this->writeBuffer(
-									$theFile,
-									hex2bin( '65' )
-								);
-							break;
-
-						default:
-							throw new InvalidArgumentException(
-								"Invalid type [" .
-								$type[ 'type' ] .
-								"]." );											// !@! ==>
-
-					} // Parsing other types.
-
-				} // Other types.
-
-			} // Iterating variables.
-
-		} // Iterating data.
+			$this->writeObservation( $theFile, $record, $strings );
 
 		//
 		// Write closing token.
@@ -4284,11 +4113,6 @@ class StataFile
 			foreach( $cursor as $record )
 			{
 				//
-				// Set observation.
-				//
-				$observation = $record[ '_id' ];
-
-				//
 				// Iterate long strings.
 				//
 				foreach( $variables as $variable => $name )
@@ -4314,7 +4138,7 @@ class StataFile
 							//
 							$strings[ $hash ] = [
 								'v' => $variable + 1,
-								'o' => $observation
+								'o' => $record[ '_id' ]
 							];
 
 							//
@@ -6190,7 +6014,7 @@ class StataFile
 	 * @throws RuntimeException
 	 */
 	protected function writeDouble( SplFileObject $theFile,
-												  $theValue,
+									$theValue,
 									bool		  $doWrite = TRUE )
 	{
 		//
@@ -6202,7 +6026,7 @@ class StataFile
 		// Handle missing value.
 		//
 		if( ($theValue < -1.798e+308)
-		 || ($theValue >  8.988e+307) )
+			|| ($theValue >  8.988e+307) )
 		{
 			//
 			// Parse byte order.
@@ -6261,6 +6085,191 @@ class StataFile
 		return $value;																// ==>
 
 	} // writeDouble.
+
+
+	/*===================================================================================
+	 *	writeObservation																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write an observation.</h4>
+	 *
+	 * This method can be used to write an observation.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 * @param array					$theData			Observation.
+	 * @param array				   &$theStrings			Long string references.
+	 * @throws RuntimeException
+	 */
+	protected function writeObservation( SplFileObject $theFile, $theData, &$theStrings )
+	{
+		//
+		// Iterate variables.
+		//
+		foreach( $this->mDict as $variable => $type )
+		{
+			//
+			// Handle fixed string.
+			//
+			if( $type[ 'type' ] <= self::kSTATA_TYPE_FIXED_STRING )
+				$this->writeBuffer(
+					$theFile,
+					$this->writeCString(
+						$theFile,
+						$type[ 'type' ],
+						(( array_key_exists( $type[ self::kOFFSET_NAME ], $theData ) )
+							? $theData[ $type[ self::kOFFSET_NAME ] ]
+							: "\0"),
+						FALSE
+					)
+				);
+
+			//
+			// Handle other types.
+			//
+			else
+			{
+				//
+				// Parse type.
+				//
+				switch( $type[ 'type' ] )
+				{
+					case self::kSTATA_TYPE_LONG_STRING:	// strL
+						if( array_key_exists( $type[ self::kOFFSET_NAME ], $theData ) )
+						{
+							$string = $theData[ $type[ self::kOFFSET_NAME ] ]->getData();
+							$hash = md5( $string );
+							if( ! array_key_exists( $hash, $theStrings ) )
+								$theStrings[ $hash ] = [
+									'v' => $variable + 1,
+									'o' => $theData[ '_id' ]
+								];
+							$this->writeBuffer(
+								$theFile,
+								$this->writeUShort(
+									$theFile,
+									$theStrings[ $hash ][ 'v' ],
+									FALSE
+								)
+							);
+							$this->writeBuffer(
+								$theFile,
+								$this->writeUInt48(
+									$theFile,
+									$theStrings[ $hash ][ 'o' ],
+									FALSE
+								)
+							);
+						}
+						else
+						{
+							$this->writeBuffer(
+								$theFile,
+								$this->writeUShort( $theFile, 0, FALSE )
+							);
+							$this->writeBuffer(
+								$theFile,
+								$this->writeUInt48( $theFile, 0, FALSE )
+							);
+						}
+						break;
+
+					case self::kSTATA_TYPE_DOUBLE: // double
+						if( array_key_exists( $type[ self::kOFFSET_NAME ], $theData ) )
+							$this->writeBuffer(
+								$theFile,
+								$this->writeDouble(
+									$theFile,
+									(double)$theData[ $type[ self::kOFFSET_NAME ] ],
+									FALSE
+								)
+							);
+						elseif( $this->ByteOrder() == 'MSF' )
+							$this->writeBuffer(
+								$theFile,
+								hex2bin( '7fe0000000000000' )
+							);
+						else
+							$this->writeBuffer(
+								$theFile,
+								hex2bin( '000000000000e07f' )
+							);
+						break;
+
+					case self::kSTATA_TYPE_FLOAT: // float
+						if( array_key_exists( $type[ self::kOFFSET_NAME ], $theData ) )
+							$this->writeBuffer(
+								$theFile,
+								$this->writeFloat(
+									$theFile,
+									(float)$theData[ $type[ self::kOFFSET_NAME ] ],
+									FALSE
+								)
+							);
+						elseif( $this->ByteOrder() == 'MSF' )
+							$this->writeBuffer(
+								$theFile,
+								hex2bin( '7f000000' )
+							);
+						else
+							$this->writeBuffer(
+								$theFile,
+								hex2bin( '0000007f' )
+							);
+						break;
+
+					case self::kSTATA_TYPE_LONG: // long
+						if( array_key_exists( $type[ self::kOFFSET_NAME ], $theData ) )
+							$value = $theData[ $type[ self::kOFFSET_NAME ] ];
+						else
+							$value = 2147483621;
+						$this->writeBuffer(
+							$theFile,
+							$this->writeLong( $theFile, $value, FALSE )
+						);
+						break;
+
+					case self::kSTATA_TYPE_SHORT: // int
+						if( array_key_exists( $type[ self::kOFFSET_NAME ], $theData ) )
+							$value = $theData[ $type[ self::kOFFSET_NAME ] ];
+						else
+							$value = 32741;
+						$this->writeBuffer(
+							$theFile,
+							$this->writeInt( $theFile, $value, FALSE )
+						);
+						break;
+
+					case self::kSTATA_TYPE_BYTE: // byte
+						if( array_key_exists( $type[ self::kOFFSET_NAME ], $theData ) )
+							$this->writeBuffer(
+								$theFile,
+								$this->writeByte(
+									$theFile,
+									$theData[ $type[ self::kOFFSET_NAME ] ],
+									FALSE
+								)
+							);
+						else
+							$this->writeBuffer(
+								$theFile,
+								hex2bin( '65' )
+							);
+						break;
+
+					default:
+						throw new InvalidArgumentException(
+							"Invalid type [" .
+							$type[ 'type' ] .
+							"]." );												// !@! ==>
+
+				} // Parsing other types.
+
+			} // Other types.
+
+		} // Iterating variables.
+
+	} // writeObservation.
 
 
 	/*===================================================================================

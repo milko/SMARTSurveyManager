@@ -26,8 +26,8 @@ $bench = new Ubench();
 //
 // Instantiate object.
 //
-echo( '$test = new StataFile();' . "\n" );
-$test = new StataFile();
+echo( '$test = new StataFile( "mongodb://localhost:27017", "STATA", "test", TRUE );' . "\n" );
+$test = new StataFile( "mongodb://localhost:27017", "STATA", "test", TRUE );
 print_r( $test );
 
 echo( "\n====================================================================================\n\n" );
@@ -37,7 +37,7 @@ echo( "\n=======================================================================
 //
 echo( '$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );' . "\n" );
 $bench->start();
-$result = $test->Read( kPATH_LIBRARY_ROOT . "test/LARGE.dta" );
+$result = $test->Read( kPATH_LIBRARY_ROOT . "test/READ.dta" );
 $bench->end();
 var_dump( $result->getRealPath() );
 print_r( $test );
@@ -57,6 +57,21 @@ var_dump( $result->getRealPath() );
 print_r( $test );
 echo( "\nTime: " . $bench->getTime() . "\n" );
 echo( "Memory: " . $bench->getMemoryPeak() . "\n\n" );
+
+echo( "\n" );
+
+//
+// Write from database.
+//
+echo( '$test = new StataFile( "mongodb://localhost:27017", "STATA", "test" );' . "\n" );
+$test = new StataFile( "mongodb://localhost:27017", "STATA", "test" );
+$bench->start();
+$result = $test->Write( kPATH_LIBRARY_ROOT . "test/WRITE.dta" );
+$bench->end();
+var_dump( $result->getRealPath() );
+print_r( $test );
+echo( "\nTime: " . $bench->getTime() . "\n" );
+echo( "Memory: " . $bench->getMemoryPeak() . "\n\n" );
 exit;
 
 echo( "\n====================================================================================\n\n" );
@@ -64,8 +79,8 @@ echo( "\n=======================================================================
 //
 // Instantiate object.
 //
-echo( '$test = new StataFile();' . "\n" );
-$test = new StataFile();
+echo( '$test = new StataFile( "mongodb://localhost:27017", "STATA", "test", TRUE );' . "\n" );
+$test = new StataFile( "mongodb://localhost:27017", "STATA", "test", TRUE );
 echo( '$test->Format( "118" );' . "\n" );
 $test->Format( "118" );
 echo( '$test->ByteOrder( "LSF" );' . "\n" );
