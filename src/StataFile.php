@@ -703,10 +703,10 @@ class StataFile
 	 * 	<li><i>index</i>: The variable index.
 	 * 	<li><i>value</i>: The variable information:
 	 * 	 <ul>
-	 * 		<li><tt>kOFFSET_NAME</tt>: Variable name.
-	 * 		<li><tt>kOFFSET_LABEL</tt>: Variable label.
-	 * 		<li><tt>kOFFSET_TYPE</tt>: Variable data type.
-	 * 		<li><tt>kOFFSET_FORMAT</tt>: Variable data format.
+	 * 		<li><tt>{@link kOFFSET_NAME}</tt>: Variable name.
+	 * 		<li><tt>{@link kOFFSET_LABEL}</tt>: Variable label.
+	 * 		<li><tt>{@link kOFFSET_TYPE}</tt>: Variable data type.
+	 * 		<li><tt>{@link kOFFSET_FORMAT}</tt>: Variable data format.
 	 * 	 </ul>
 	 * </ul>
 	 *
