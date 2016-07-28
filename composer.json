@@ -19,7 +19,7 @@
 		"psr-4": { "Milko\\": "src/" }
 	},
 	"require": {
-		"mongodb/mongodb": ">=1.0-stable",
+		"mongodb/mongodb": ">=1.0-dev",
 		"devster/ubench": ">=1.2-stable",
 		"phpoffice/phpexcel": ">=1.8.1-stable"
 	},
