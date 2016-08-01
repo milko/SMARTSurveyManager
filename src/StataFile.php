@@ -335,6 +335,15 @@ class StataFile
 	const kOFFSET_CHARS_DATA = 'data';
 
 	/**
+	 * <h4>Notes offset.</h4>
+	 *
+	 * This constant holds the <em>notes offset</em>.
+	 *
+	 * @var string
+	 */
+	const kOFFSET_NOTES = 'notes';
+
+	/**
 	 * <h4>Map open index.</h4>
 	 *
 	 * This constant holds the <em>index to the map opening token offset</em>.
@@ -2132,102 +2141,106 @@ class StataFile
 	 * The method will return an array of notes, or an empty array if there are no notes
 	 * for the provided variable.
 	 *
+	 * When adding notes, if the variable is not matched, the method will raise an
+	 * exception.
+	 *
 	 * @param string				$theNote			Note or operation.
 	 * @param string				$theVariable		Variable name or <tt>NULL</tt>.
+	 * @return array				The full set of notes.
+	 * @throws InvalidArgumentException
 	 */
 	public function Note( string $theNote = NULL, string $theVariable = NULL )
 	{
 		//
-		// Init local storage.
+		// Return notes.
 		//
-		$notes = [];
-		$variable = ( $theVariable === NULL )
-				  ? '_dta'
-				  : $theVariable;
+		if( $theNote === NULL )
+		{
+			//
+			// Dataset note.
+			//
+			if( $theVariable === NULL )
+				return ( array_key_exists( self::kOFFSET_NOTES, $this->mHeader ) )
+					 ? $this->mHeader[ self::kOFFSET_NOTES ]						// ==>
+					 : [];
+
+			//
+			// Match variable.
+			//
+			$found = NULL;
+			foreach( array_keys( $this->mDict ) as $key )
+			{
+				if( $theVariable == $this->mDict[ $key ][ self::kOFFSET_NAME ] )
+				{
+					$found = $key;
+					break;														// =>
+				}
+			}
+
+			//
+			// Handle not found.
+			//
+			if( $found === NULL )
+				return [];															// ==>
+
+			return $this->mDict[ $found ][ self::kOFFSET_NOTES ];					// ==>
+
+		} // Return notes.
 
 		//
-		// Locate index.
+		// Create dataset note.
 		//
-		$index = NULL;
-		foreach( $this->mChars as $key => $value )
+		if( $theVariable === NULL )
 		{
-			if( ($value[ self::kOFFSET_CHARS_VARNAME ] == $variable)
-			 && ($value[ self::kOFFSET_CHARS_NAME ] == 'note0') )
+			//
+			// Create notes field.
+			//
+			if( ! array_key_exists( self::kOFFSET_NOTES, $this->mHeader ) )
+				$this->mHeader[ self::kOFFSET_NOTES ] = [ $theNote ];
+
+			//
+			// Add note.
+			//
+			else
+				$this->mHeader[ self::kOFFSET_NOTES ][] = $theNote;
+
+			return $this->mHeader[ self::kOFFSET_NOTES ];							// ==>
+
+		} // Dataset note.
+
+		//
+		// Match variable.
+		//
+		$found = NULL;
+		foreach( array_keys( $this->mDict ) as $key )
+		{
+			if( $theVariable == $this->mDict[ $key ][ self::kOFFSET_NAME ] )
 			{
-				$index = $key;
+				$found = $key;
 				break;															// =>
 			}
 		}
 
 		//
-		// Return note.
+		// Handle not found.
 		//
-		if( $theNote === NULL )
-		{
-			//
-			// Handle no notes.
-			//
-			if( $index === NULL )
-				return $notes;														// ==>
-
-			//
-			// Collect notes.
-			//
-			foreach( $this->mChars as $value )
-			{
-				if( ($value[ self::kOFFSET_CHARS_VARNAME ] == $variable)
-				 && ($value[ self::kOFFSET_CHARS_NAME ] != 'note0') )
-					$notes[ (int)substr( $value[ self::kOFFSET_CHARS_NAME ], 4 ) ]
-						= $value[ self::kOFFSET_CHARS_DATA ];
-			}
-
-			//
-			// Sort notes.
-			//
-			ksort( $notes );
-
-			return array_values( $notes );											// ==>
-
-		} // Return note.
+		if( $found === NULL )
+			throw new InvalidArgumentException(
+				"Unknown variable name [$theVariable]." );						// !@! ==>
 
 		//
-		// Create index.
+		// Create notes field.
 		//
-		if( $index === NULL )
-		{
-			$index = count( $this->mChars );
-			$this->mChars[ $index ] = [
-				self::kOFFSET_CHARS_VARNAME => $variable,
-				self::kOFFSET_CHARS_NAME => 'note0',
-				self::kOFFSET_CHARS_DATA => '0',
-				self::kOFFSET_CHARS_SIZE => (129 * 2) + 1 + 1
-			];
-
-		} // New variable.
-
-		//
-		// Update index.
-		//
-		$count = (int)$this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ];
-		$this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ] = (int)( $count + 1 );
-		$this->mChars[ $index ][ self::kOFFSET_CHARS_SIZE ]
-			= (129 * 2)
-			+ mb_strlen( $this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ], '8bit' )
-			+ 1;
+		if( ! array_key_exists( self::kOFFSET_NOTES, $this->mDict[ $found ] ) )
+			$this->mDict[ $found ][ self::kOFFSET_NOTES ] = [ $theNote ];
 
 		//
 		// Add note.
 		//
-		$note = [];
-		$note[ self::kOFFSET_CHARS_VARNAME ] = $variable;
-		$note[ self::kOFFSET_CHARS_NAME ]
-			= "note" . $this->mChars[ $index ][ self::kOFFSET_CHARS_DATA ];
-		$note[ self::kOFFSET_CHARS_DATA ] = $this->truncateString( $theNote, 67783 );
-		$note[ self::kOFFSET_CHARS_SIZE ]
-			= (129 * 2) + mb_strlen( $note[ self::kOFFSET_CHARS_DATA ], '8bit' );
-		$this->mChars[] = $note;
+		else
+			$this->mDict[ $found ][ self::kOFFSET_NOTES ][] = $theNote;
 
-		return $this->Note( NULL, $theVariable );									// ==>
+		return $this->mDict[ $found ][ self::kOFFSET_NOTES ];						// ==>
 
 	} // Note.
 
@@ -3513,7 +3526,7 @@ class StataFile
 		//
 		// Init characteristics.
 		//
-		$this->mChars = [];
+		$this->mChars = $dnotes = $vnotes = [];
 
 		//
 		// Get opening token.
@@ -3532,37 +3545,61 @@ class StataFile
 			if( $tmp == '<ch>' )
 			{
 				//
-				// Add element.
+				// Read characteristics.
 				//
-				$index = count( $this->mChars );
-				$this->mChars[ $index ] = [];
-				$element = & $this->mChars[ $index ];
+				$block_size = $this->readUInt32( $theFile );
+				$var_name = $this->readCString( $theFile, 129 );
+				$char_name = $this->readCString( $theFile, 129 );
+				$char_data = $this->readCString( $theFile, $block_size - (129 * 2) );
 
 				//
-				// Read block size.
+				// Add note.
 				//
-				$element[ self::kOFFSET_CHARS_SIZE ]
-					= $this->readUInt32( $theFile );
+				if( substr( $char_name, 0, 4 ) == 'note' )
+				{
+					//
+					// Get note index.
+					//
+					$index = (int)substr( $char_name, 4 );
+					if( $index )
+					{
+						//
+						// Dataset note.
+						//
+						if( $var_name == '_dta' )
+							$dnotes[ $index ] = $char_data;
+
+						//
+						// Variable note.
+						//
+						else
+							$vnotes[ $var_name ][ $index ] = $char_data;
+
+					} // Not index note.
+
+				} // Is a note.
 
 				//
-				// Read variable name.
+				// Add other characteristic.
 				//
-				$element[ self::kOFFSET_CHARS_VARNAME ]
-					= $this->readCString( $theFile, 129 );
+				else
+				{
+					//
+					// Add element.
+					//
+					$index = count( $this->mChars );
+					$this->mChars[ $index ] = [];
+					$element = & $this->mChars[ $index ];
 
-				//
-				// Read characteristic name.
-				//
-				$element[ self::kOFFSET_CHARS_NAME ]
-					= $this->readCString( $theFile, 129 );
+					//
+					// Set data.
+					//
+					$element[ self::kOFFSET_CHARS_SIZE ] = $block_size;
+					$element[ self::kOFFSET_CHARS_VARNAME ] = $var_name;
+					$element[ self::kOFFSET_CHARS_NAME ] = $char_name;
+					$element[ self::kOFFSET_CHARS_DATA ] = $char_data;
 
-				//
-				// Read characteristic data.
-				//
-				$element[ self::kOFFSET_CHARS_DATA ]
-					= $this->readCString(
-						$theFile, $element[ self::kOFFSET_CHARS_SIZE ] - (129 * 2)
-					);
+				} // Other characteristic.
 
 				//
 				// Read end of element.
@@ -3611,6 +3648,35 @@ class StataFile
 					"Unexpected end of characteristics block [$tmp]." );		// !@! ==>
 
 		} // Iterating characteristics.
+
+		//
+		// Add dataset notes.
+		//
+		if( count( $dnotes ) )
+		{
+			ksort( $dnotes );
+			foreach( $dnotes as $note )
+				$this->Note( $note );
+
+		} // Has dataset notes.
+
+		//
+		// Add variable notes.
+		//
+		if( count( $vnotes ) )
+		{
+			//
+			// Iterate variables.
+			//
+			foreach( $vnotes as $variable => $notes )
+			{
+				ksort( $notes );
+				foreach( $notes as $note )
+					$this->Note( $note, $variable );
+
+			} // Iterating variables.
+
+		} // Has variable notes.
 
 	} // characteristicsRead.
 
@@ -3720,6 +3786,56 @@ class StataFile
 			);
 
 		} // Iterating characteristics.
+
+		//
+		// Handle dataset notes.
+		//
+		$notes = $this->Note();
+		if( $count = count( $notes ) )
+		{
+			//
+			// Write index.
+			//
+			$this->writeCharacteristic( $theFile, '_dta', 'note0', count( $notes ) );
+
+			//
+			// Write notes.
+			//
+			$index = 1;
+			foreach( $notes as $note )
+				$this->writeCharacteristic( $theFile, '_dta', 'note' . $index++, $note );
+
+		} // Has dataset notes.
+
+		//
+		// Handle variable notes.
+		//
+		foreach( $this->mDict as $dict )
+		{
+			//
+			// Handle notes.
+			//
+			if( array_key_exists( self::kOFFSET_NOTES, $dict ) )
+			{
+				//
+				// Write index.
+				//
+				$this->writeCharacteristic(
+					$theFile, $dict[ self::kOFFSET_NAME ], 'note0', count( $notes )
+				);
+
+				//
+				// Write notes.
+				//
+				$index = 1;
+				foreach( $dict[ self::kOFFSET_NOTES ] as $note )
+					$this->writeCharacteristic(
+						$theFile, $dict[ self::kOFFSET_NAME ], 'note' . $index++, $note
+					);
+
+			} // Has notes.
+
+		} // Iterating data dictionary.
 
 		//
 		// Write closing token.
@@ -6085,6 +6201,106 @@ class StataFile
 		return $value;																// ==>
 
 	} // writeDouble.
+
+
+	/*===================================================================================
+	 *	writeCharacteristic																*
+	 *==================================================================================*/
+
+	/**
+	 * <h4>Write a characteristics record.</h4>
+	 *
+	 * This method can be used to write characteristics record.
+	 *
+	 * @param SplFileObject			$theFile			File to write.
+	 * @param string				$theVarName			Variable name.
+	 * @param string				$theCharName		Characteristic name.
+	 * @param string				$theData			Characteristic data.
+	 * @throws RuntimeException
+	 */
+	protected function writeCharacteristic( SplFileObject $theFile,
+											string		  $theVarName,
+											string		  $theCharName,
+											string		  $theData )
+	{
+		//
+		// Open element.
+		//
+		$this->writeBuffer(
+			$theFile,
+			$this->writeToken(
+				$theFile,
+				self::kTOKEN_FILE_CHARACTERISTIC_ELEMENT,
+				FALSE,
+				FALSE
+			)
+		);
+
+		//
+		// Write element size.
+		//
+		$this->writeBuffer(
+			$theFile,
+			$this->writeUInt32(
+				$theFile,
+				129 + 129 + mb_strlen( $theData, '8bit' ) + 1,
+				FALSE
+			)
+		);
+
+		//
+		// Write variable name.
+		//
+		$this->writeBuffer(
+			$theFile,
+			$this->writeCString(
+				$theFile,
+				129,
+				$theVarName,
+				FALSE
+			)
+		);
+
+		//
+		// Write characteristic name.
+		//
+		$this->writeBuffer(
+			$theFile,
+			$this->writeCString(
+				$theFile,
+				129,
+				$theCharName,
+				FALSE
+			)
+		);
+
+		//
+		// Write characteristic data.
+		//
+		$this->writeBuffer(
+			$theFile,
+			$this->writeCString(
+				$theFile,
+				mb_strlen( $theData, '8bit' ) + 1,
+				$theData,
+				FALSE
+			)
+		);
+
+		//
+		// Close element.
+		//
+		$this->writeBuffer(
+			$theFile,
+			$this->writeToken(
+				$theFile,
+				self::kTOKEN_FILE_CHARACTERISTIC_ELEMENT,
+				TRUE,
+				FALSE
+			)
+		);
+
+	} // writeCharacteristic.
 
 
 	/*===================================================================================
